@@ -52,7 +52,7 @@ jobs:
           import pathlib, re, sys
           p = pathlib.Path(sys.argv[1])
           s = p.read_text()
-          s2 = re.sub(r'(?i)(minSdk(?:Version)?\\s*(?:=\\s*)?)23\\b', r'\\g<1>24', s)
+          s2 = re.sub(r'(?i)(minSdk(?:Version)?\s*(?:=\s*)?)23\b', r'\g<1>24', s)
           if s2 == s and not re.search(r'(?i)minSdk(?:Version)?', s):
               raise SystemExit("No minSdk declaration found in app Gradle file")
           p.write_text(s2)
