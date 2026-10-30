@@ -74,6 +74,23 @@ jobs:
           echo "Manifest uses-sdk:"
           grep -n -i 'uses-sdk\|minSdkVersion' "$MANIFEST" || true
 
+      - name: Use app-scoped test directory for file operations
+        run: |
+          python3 - "$PROJECT_DIR/app/src/main/java/com/nacer/injector/MainActivity.java" <<'PY'
+          import pathlib, sys
+          p = pathlib.Path(sys.argv[1])
+          s = p.read_text()
+          old_dir = 'String dir = "/storage/emulated/0/Android/data/com.dts.freefireth/files";'
+          new_dir = 'String dir = new File(getExternalFilesDir("test-output"), "files").getAbsolutePath();'
+          old_call = 'Shizuku.newProcess(new String[]{"sh", "-c", script}, null, null)'
+          new_call = 'Runtime.getRuntime().exec(new String[]{"sh", "-c", script})'
+          if old_dir not in s or old_call not in s:
+              raise SystemExit("Expected file-operation code was not found; refusing an uncertain patch.")
+          s = s.replace(old_dir, new_dir, 1).replace(old_call, new_call, 1)
+          p.write_text(s)
+          print("Patched file destination to app-scoped test-output/files and removed inaccessible Shizuku.newProcess call.")
+          PY
+
       - name: Build debug APK
         run: |
           cd "$PROJECT_DIR"
