@@ -47,7 +47,12 @@ jobs:
             echo "Could not find app/build.gradle or app/build.gradle.kts"
             exit 1
           fi
-          grep -nE 'minSdk' "$PROJECT_DIR/app/build.gradle" "$PROJECT_DIR/app/build.gradle.kts" 2>/dev/null || true
+          MANIFEST="$PROJECT_DIR/app/src/main/AndroidManifest.xml"
+          if [ -f "$MANIFEST" ]; then
+            sed -i -E 's/android:minSdkVersion="[0-9]+"/android:minSdkVersion="24"/g' "$MANIFEST"
+          fi
+          echo "Effective minSdk declarations:"
+          grep -RniE 'minSdk|uses-sdk' "$PROJECT_DIR/app/build.gradle" "$PROJECT_DIR/app/build.gradle.kts" "$MANIFEST" 2>/dev/null || true
 
       - name: Build debug APK
         run: |
