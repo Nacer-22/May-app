@@ -38,7 +38,7 @@ jobs:
 
       - name: Inspect Shizuku call without changing app code
         run: |
-          SOURCE="$PROJECT_DIR/app/src/main/java/com/nacer/injector/MainActivity.java"
+          SOURCE="$PROJECT_DIR/app/src/main/java/com.dts.freefireth//injector/MainActivity.java"
           echo "MainActivity.java lines 255-290:"
           nl -ba "$SOURCE" | sed -n '255,290p'
           echo "Shizuku imports and references:"
