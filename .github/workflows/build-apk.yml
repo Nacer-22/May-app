@@ -36,6 +36,19 @@ jobs:
           fi
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
+      - name: Raise minSdk for Shizuku API 13.1.5
+        run: |
+          FILE="$PROJECT_DIR/app/build.gradle"
+          if [ -f "$FILE" ]; then
+            sed -i -E 's/minSdkVersion[[:space:]]+23/minSdkVersion 24/g; s/minSdk[[:space:]]*=[[:space:]]*23/minSdk = 24/g' "$FILE"
+          elif [ -f "$PROJECT_DIR/app/build.gradle.kts" ]; then
+            sed -i -E 's/minSdk[[:space:]]*=[[:space:]]*23/minSdk = 24/g' "$PROJECT_DIR/app/build.gradle.kts"
+          else
+            echo "Could not find app/build.gradle or app/build.gradle.kts"
+            exit 1
+          fi
+          grep -nE 'minSdk' "$PROJECT_DIR/app/build.gradle" "$PROJECT_DIR/app/build.gradle.kts" 2>/dev/null || true
+
       - name: Build debug APK
         run: |
           cd "$PROJECT_DIR"
