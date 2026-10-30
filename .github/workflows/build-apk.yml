@@ -20,21 +20,26 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.7"
+
       - name: Extract Android project
         run: |
           unzip -q NacerInjector_Shizuku_AutoCopy_And_Launch.zip -d extracted
-          PROJECT_DIR="$(dirname "$(find extracted -type f -name gradlew -print -quit)")"
-          if [ -z "$PROJECT_DIR" ] || [ ! -f "$PROJECT_DIR/gradlew" ]; then
-            echo "Could not find gradlew in the ZIP archive."
+          PROJECT_DIR="$(dirname "$(find extracted -type f -name settings.gradle -o -name settings.gradle.kts | head -n 1)")"
+          if [ -z "$PROJECT_DIR" ] || [ ! -d "$PROJECT_DIR/app" ] || [ ! -f "$PROJECT_DIR/build.gradle" ]; then
+            echo "Android project root not found (expected app/ and build.gradle beside settings.gradle)."
+            find extracted -maxdepth 4 -type f | sort | head -200
             exit 1
           fi
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
-          chmod +x "$PROJECT_DIR/gradlew"
 
       - name: Build debug APK
         run: |
           cd "$PROJECT_DIR"
-          ./gradlew --no-daemon assembleDebug
+          gradle --no-daemon assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
