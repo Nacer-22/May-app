@@ -36,6 +36,14 @@ jobs:
           fi
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
+      - name: Inspect Shizuku call without changing app code
+        run: |
+          SOURCE="$PROJECT_DIR/app/src/main/java/com/nacer/injector/MainActivity.java"
+          echo "MainActivity.java lines 255-290:"
+          nl -ba "$SOURCE" | sed -n '255,290p'
+          echo "Shizuku imports and references:"
+          grep -n -E 'import .*Shizuku|Shizuku\.' "$SOURCE" || true
+
       - name: Raise minSdk for Shizuku API 13.1.5
         run: |
           FILE="$PROJECT_DIR/app/build.gradle"
