@@ -39,20 +39,32 @@ jobs:
       - name: Raise minSdk for Shizuku API 13.1.5
         run: |
           FILE="$PROJECT_DIR/app/build.gradle"
-          if [ -f "$FILE" ]; then
-            sed -i -E 's/minSdkVersion[[:space:]]+23/minSdkVersion 24/g; s/minSdk[[:space:]]*=[[:space:]]*23/minSdk = 24/g' "$FILE"
-          elif [ -f "$PROJECT_DIR/app/build.gradle.kts" ]; then
-            sed -i -E 's/minSdk[[:space:]]*=[[:space:]]*23/minSdk = 24/g' "$PROJECT_DIR/app/build.gradle.kts"
-          else
-            echo "Could not find app/build.gradle or app/build.gradle.kts"
+          if [ -f "$PROJECT_DIR/app/build.gradle.kts" ]; then
+            FILE="$PROJECT_DIR/app/build.gradle.kts"
+          fi
+          if [ ! -f "$FILE" ]; then
+            echo "App Gradle file not found"
             exit 1
           fi
+          echo "Before patch:"
+          grep -n -i 'minSdk' "$FILE" || true
+          python3 - "$FILE" <<'PY'
+          import pathlib, re, sys
+          p = pathlib.Path(sys.argv[1])
+          s = p.read_text()
+          s2 = re.sub(r'(?i)(minSdk(?:Version)?\\s*(?:=\\s*)?)23\\b', r'\\g<1>24', s)
+          if s2 == s and not re.search(r'(?i)minSdk(?:Version)?', s):
+              raise SystemExit("No minSdk declaration found in app Gradle file")
+          p.write_text(s2)
+          PY
           MANIFEST="$PROJECT_DIR/app/src/main/AndroidManifest.xml"
           if [ -f "$MANIFEST" ]; then
             sed -i -E 's/android:minSdkVersion="[0-9]+"/android:minSdkVersion="24"/g' "$MANIFEST"
           fi
-          echo "Effective minSdk declarations:"
-          grep -RniE 'minSdk|uses-sdk' "$PROJECT_DIR/app/build.gradle" "$PROJECT_DIR/app/build.gradle.kts" "$MANIFEST" 2>/dev/null || true
+          echo "After patch:"
+          grep -n -i 'minSdk' "$FILE" || true
+          echo "Manifest uses-sdk:"
+          grep -n -i 'uses-sdk\|minSdkVersion' "$MANIFEST" || true
 
       - name: Build debug APK
         run: |
