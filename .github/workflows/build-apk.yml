@@ -1,0 +1,45 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "NacerInjector_Shizuku_AutoCopy_And_Launch.zip"
+      - ".github/workflows/build-apk.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Extract Android project
+        run: |
+          unzip -q NacerInjector_Shizuku_AutoCopy_And_Launch.zip -d extracted
+          PROJECT_DIR="$(dirname "$(find extracted -type f -name gradlew -print -quit)")"
+          if [ -z "$PROJECT_DIR" ] || [ ! -f "$PROJECT_DIR/gradlew" ]; then
+            echo "Could not find gradlew in the ZIP archive."
+            exit 1
+          fi
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+          chmod +x "$PROJECT_DIR/gradlew"
+
+      - name: Build debug APK
+        run: |
+          cd "$PROJECT_DIR"
+          ./gradlew --no-daemon assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: May-app-debug-apk
+          path: extracted/**/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 7
