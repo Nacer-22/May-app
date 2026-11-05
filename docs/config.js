@@ -1,9 +1,14 @@
 /*
- * Nacer_X_Rida — إعدادات الواجهة
- * ------------------------------------------------
- * عند تشغيل الخادم المرفق محليًا (portal/server.js) اترك القيمة فارغة،
- * فستستخدم الواجهة المسار النسبي /api/login تلقائيًا.
- *
- * على GitHub Pages (استضافة ثابتة) يجب تحديد رابط خادم التحقق الكامل.
+ * Nacer_X_Rida — إعدادات الاتصال بخادم المفاتيح
+ * ------------------------------------------------------------------
+ * endpoint : رابط التحقق الكامل على خادمك
+ * contract : 'verify' لعقد { code, device_id } → { valid }
+ *            'portal' لعقد { key } → { ok }
+ * timeoutMs: مهلة الانتظار (Render يستيقظ من السكون خلال ~50 ثانية)
+ * ------------------------------------------------------------------
  */
-window.NXR_AUTH_ENDPOINT = 'https://key-system-yn0o.onrender.com/api/portal/login';
+window.NXR_CONFIG = {
+  endpoint: 'https://key-system-yn0o.onrender.com/api/verify',
+  contract: 'verify',
+  timeoutMs: 75000,
+};
