@@ -1,102 +1,44 @@
-<!DOCTYPE html>
-<html lang="en" id="html-root" dir="ltr">
+<!doctype html>
+<html lang="en" dir="ltr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <meta name="theme-color" content="#050505" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="theme-color" content="#050505">
   <title>Nacer_X_Rida</title>
-  <meta name="description" content="Nacer_X_Rida secure access portal." />
-
-  <meta property="og:type" content="website" />
-  <meta property="og:title" content="Nacer_X_Rida" />
-  <meta property="og:description" content="Nacer_X_Rida secure access portal." />
-  <meta property="og:image" content="public/opengraph-image.png" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Nacer_X_Rida" />
-  <meta name="twitter:image" content="public/opengraph-image.png" />
-
-  <link rel="icon" type="image/png" href="public/icon.png" />
-  <link rel="apple-touch-icon" href="public/apple-icon.png" />
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="src/styles.css" />
-  <link rel="stylesheet" href="src/nacer-theme.css" />
-
+  <link rel="stylesheet" href="src/styles.css">
   <style>
-    :root {
-      --bg-color: #050505;
-      --card-bg: #0c0c0e;
-      --border-color: #1a1a1e;
-      --accent-red: #e50914;
-      --text-main: #ffffff;
-      --text-muted: #71717a;
-      --font-title: 'Anton', sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    body { background: var(--bg-color); color: var(--text-main); font-family: var(--font-mono); min-height: 100vh; overflow-x: hidden; display: flex; justify-content: center; }
-
-    #app { width: 100%; max-width: 440px; min-height: 100vh; display: flex; flex-direction: column; position: relative; }
-
-    .login-container { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; }
-    .brand-logo-img { max-width: 190px; width: 100%; height: auto; margin-bottom: 24px; filter: drop-shadow(0 0 20px rgba(229, 9, 20, 0.4)); object-fit: contain; }
-    .login-title { font-family: var(--font-title); font-size: 42px; letter-spacing: 2px; color: #fff; text-transform: uppercase; margin-bottom: 4px; }
-    .login-sub { font-size: 11px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 32px; font-weight: 600; }
-
-    .input-label-cyber { width: 100%; text-align: left; font-size: 10px; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 1.5px; text-transform: uppercase; display: flex; align-items: center; gap: 6px; }
-    .input-label-cyber::before { content: ""; width: 5px; height: 5px; background: var(--accent-red); }
-
-    .key-input-cyber-wrap { width: 100%; background: var(--card-bg); border: 1px solid var(--border-color); display: flex; align-items: center; padding: 4px; margin-bottom: 20px; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%); }
-    .key-input-cyber { flex: 1; background: transparent; border: none; outline: none; color: #fff; font-family: var(--font-mono); font-size: 13px; padding: 12px; text-align: center; font-weight: 700; letter-spacing: 1.5px; }
-    .key-input-cyber::placeholder { color: #3f3f46; }
-
-    .paste-btn-cyber { background: #18181c; border: 1px solid #2a2a30; color: #fff; padding: 10px 16px; font-family: var(--font-mono); font-size: 10px; font-weight: 700; cursor: pointer; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%); transition: background 0.2s; }
-
-    .btn-unlock-cyber { width: 100%; background: var(--accent-red); color: #ffffff; border: none; padding: 18px; font-family: var(--font-title); font-size: 22px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%); box-shadow: 0 8px 25px rgba(229, 9, 20, 0.35); margin-bottom: 18px; transition: transform 0.2s; }
-    .btn-unlock-cyber:active { transform: scale(0.98); }
-    .btn-unlock-cyber:disabled { opacity: .7; cursor: wait; }
-
-    .login-status { min-height: 18px; margin: 0 0 14px; font-size: 11px; line-height: 1.6; color: #fca5a5; font-weight: 600; }
-    .login-status[data-state="ok"] { color: #4ade80; }
-    .login-status[data-state="info"] { color: #a1a1aa; }
+    :root{--bg:#050505;--panel:#0b0b0d;--red:#e50914;--red2:#7f0008;--text:#fff;--muted:#8a8a91}
+    *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif}
+    body{min-height:100vh;overflow-x:hidden;background:radial-gradient(circle at 50% 15%,rgba(229,9,20,.18),transparent 36%),linear-gradient(145deg,#050505 0%,#090909 48%,#160205 100%)}
+    #app{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .shell{width:min(100%,430px);position:relative;padding:28px;border:1px solid rgba(229,9,20,.35);background:linear-gradient(145deg,rgba(18,18,20,.96),rgba(5,5,5,.98));box-shadow:0 30px 100px rgba(0,0,0,.7),0 0 55px rgba(229,9,20,.12);clip-path:polygon(0 0,96% 0,100% 7%,100% 100%,4% 100%,0 93%)}
+    .glow{position:absolute;inset:-1px;pointer-events:none;background:linear-gradient(120deg,transparent 20%,rgba(229,9,20,.18),transparent 70%);opacity:.8}
+    .brand{text-align:center;position:relative}.brand img{width:150px;height:150px;object-fit:contain;filter:drop-shadow(0 0 22px rgba(229,9,20,.55));margin:0 auto 10px;display:block}.brand h1{margin:0;font-size:34px;letter-spacing:3px;font-weight:900}.brand p{margin:8px 0 26px;color:var(--muted);font-size:10px;letter-spacing:2px;text-transform:uppercase}
+    .label{display:block;color:#aaaab0;font-size:10px;font-weight:800;letter-spacing:1.8px;margin:0 0 8px}.field{display:flex;gap:8px;padding:4px;background:#080809;border:1px solid #26262b;box-shadow:inset 0 0 25px rgba(0,0,0,.5);margin-bottom:14px}.field input{width:100%;min-width:0;background:transparent;border:0;outline:0;color:#fff;padding:15px 12px;font-size:14px;font-weight:800;letter-spacing:1.4px;text-align:center}.field input::placeholder{color:#45454b}.paste{border:1px solid #2d2d32;background:#151518;color:#ddd;padding:0 13px;font-weight:800;font-size:10px;cursor:pointer}
+    .unlock{width:100%;border:0;background:linear-gradient(135deg,#ff1b27 0%,#b00009 55%,#620005 100%);color:#fff;padding:17px;font-size:18px;font-weight:900;letter-spacing:2px;cursor:pointer;box-shadow:0 12px 30px rgba(229,9,20,.25);transform:translateZ(0)}.unlock:disabled{opacity:.6;cursor:wait}
+    .status{display:none;margin-top:16px;padding:14px;border:1px solid rgba(229,9,20,.35);background:#09090a;text-align:center}.status.show{display:block}.status strong{display:block;color:#ff4b53;margin-bottom:5px}.status span{color:#aaa;font-size:11px}
+    .foot{text-align:center;margin-top:20px;color:#4f4f55;font-size:9px;letter-spacing:1px}
   </style>
 </head>
 <body>
-
-  <div id="app">
-    <div class="login-container">
-      <img src="logo.png" alt="Nacer_X_Rida" class="brand-logo-img" onerror="this.onerror=null; this.style.display='none';" />
-      <h1 class="login-title">Nacer_X_Rida</h1>
-      <p class="login-sub">SECURE ACCESS</p>
-
-      <div class="input-label-cyber">ACCESS KEY</div>
-      <div class="key-input-cyber-wrap">
-        <input type="text" id="access-key-input" class="key-input-cyber" placeholder="NXR-XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false" maxlength="40" />
-        <button type="button" class="paste-btn-cyber" id="paste-btn">PASTE</button>
-      </div>
-
-      <button type="button" class="btn-unlock-cyber" id="unlock-btn">UNLOCK</button>
-
-      <p id="login-status" class="login-status" role="status" aria-live="polite"></p>
-
-      <p style="font-size: 11px; color: var(--text-muted); line-height: 1.6;">
-        No key? Contact your seller.<br>
-        <span style="font-size: 10px; color: #3f3f46;">Time starts upon connection.</span>
-      </p>
+<div id="app">
+  <main class="shell">
+    <div class="glow"></div>
+    <section class="brand">
+      <img src="logo.png" alt="Nacer_X_Rida">
+      <h1>Nacer_X_Rida</h1>
+      <p>Secure access</p>
+    </section>
+    <label class="label" for="access-key-input">ACCESS KEY</label>
+    <div class="field">
+      <input id="access-key-input" type="text" inputmode="text" autocomplete="off" spellcheck="false" maxlength="19" placeholder="PWUP-XXXX-XXXX-XXXX">
+      <button class="paste" id="paste-btn" type="button">PASTE</button>
     </div>
-  </div>
-
-  <script type="module" src="src/app.js"></script>
-  <script>
-    document.getElementById('paste-btn').addEventListener('click', async () => {
-      try {
-        const text = await navigator.clipboard.readText();
-        if (text) document.getElementById('access-key-input').value = text.trim();
-      } catch (err) { alert('Please allow clipboard permission'); }
-    });
-  </script>
+    <button class="unlock" id="unlock-btn" type="button">UNLOCK</button>
+    <div class="status" id="status"><strong id="status-title">ACCESS GRANTED</strong><span id="status-text"></span></div>
+    <div class="foot">Nacer_X_Rida • ACCESS SYSTEM</div>
+  </main>
+</div>
+<script type="module" src="src/app.js"></script>
 </body>
 </html>
