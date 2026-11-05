@@ -3,6 +3,7 @@ export const CONFIG = {
   "BRAND_TAGLINE": "key login, tunnel status, live match features.",
   "KEY_PREFIX": "PWUP",
   "KEY_PLACEHOLDER": "PWUP-XXXX-XXXX-XXXX",
+  "AUTH_API_URL": "https://key-system-yn0o.onrender.com/api/verify",
   "IS_XREG": false,
   "SOCIAL_DISCORD_URL": "https://discord.gg/Km6Hsxk7Y4",
   "SOCIAL_TELEGRAM_URL": "",
