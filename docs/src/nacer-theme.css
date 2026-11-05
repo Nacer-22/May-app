@@ -1,0 +1,116 @@
+/* Nacer_X_Rida cinematic red/black theme */
+:root {
+  --bg-color: #050507;
+  --card-bg: #101014;
+  --border-color: rgba(255, 65, 82, .22);
+  --accent-red: #f0182d;
+  --accent-red-bright: #ff4053;
+  --accent-red-deep: #7a0715;
+  --text-main: #f8f7f7;
+  --text-muted: #a19aa0;
+}
+html, body {
+  min-height: 100%;
+  background:
+    radial-gradient(ellipse at 50% 8%, rgba(145, 8, 28, .24), transparent 42%),
+    radial-gradient(ellipse at 8% 85%, rgba(90, 0, 18, .16), transparent 38%),
+    #050507 !important;
+}
+body { color: var(--text-main) !important; }
+#app { isolation: isolate; }
+.login-container {
+  position: relative !important;
+  width: min(100% - 32px, 410px) !important;
+  min-height: min(690px, calc(100vh - 38px));
+  margin: auto !important;
+  padding: 34px 25px 30px !important;
+  justify-content: center !important;
+  border: 1px solid rgba(255, 65, 82, .28) !important;
+  border-radius: 28px !important;
+  background: linear-gradient(150deg, rgba(29, 13, 17, .97), rgba(8, 8, 11, .985) 58%, rgba(18, 7, 10, .98)) !important;
+  box-shadow: 0 28px 85px rgba(0,0,0,.72), 0 0 55px rgba(213, 10, 35, .13), inset 0 1px rgba(255,255,255,.07) !important;
+  overflow: hidden;
+}
+.login-container::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+  background: linear-gradient(120deg, transparent 12%, rgba(255, 55, 76, .075) 45%, transparent 72%);
+  transform: translateX(-20%);
+}
+.login-container::after {
+  content: ""; position: absolute; width: 230px; height: 230px; top: -145px; right: -100px;
+  border-radius: 50%; background: rgba(245, 19, 48, .18); filter: blur(46px); pointer-events: none;
+}
+.brand-logo-img {
+  position: relative; z-index: 1; width: min(66vw, 205px) !important; max-width: 205px !important;
+  max-height: 205px; object-fit: contain; margin: 0 auto 8px !important;
+  filter: drop-shadow(0 14px 28px rgba(240, 14, 41, .34)) !important;
+}
+.login-title {
+  position: relative; z-index: 1; font-family: 'Anton', Impact, sans-serif !important;
+  font-size: clamp(34px, 9vw, 48px) !important; line-height: 1.05;
+  letter-spacing: .7px !important; text-transform: none !important; margin: 5px 0 8px !important;
+  color: #fff !important; text-shadow: 0 3px 0 #6d0714, 0 9px 28px rgba(245, 20, 48, .36) !important;
+}
+.login-sub {
+  position: relative; z-index: 1; color: #c1aeb2 !important; font-size: 10px !important;
+  letter-spacing: 2px !important; margin-bottom: 36px !important;
+}
+.input-label-cyber { color: #c5b9bd !important; font-weight: 800; }
+.input-label-cyber::before { width: 7px !important; height: 7px !important; border-radius: 50%; box-shadow: 0 0 12px #ff3047; }
+.key-input-cyber-wrap {
+  position: relative; z-index: 1; background: rgba(4,4,7,.78) !important;
+  border: 1px solid rgba(255,64,82,.38) !important; border-radius: 14px !important;
+  clip-path: none !important; padding: 6px !important; box-shadow: inset 0 2px 14px rgba(0,0,0,.52), 0 7px 25px rgba(0,0,0,.24);
+}
+.key-input-cyber { min-width: 0; color: #fff !important; letter-spacing: 1.3px !important; }
+.key-input-cyber::placeholder { color: #77666b !important; }
+.paste-btn-cyber {
+  border: 1px solid rgba(255,70,88,.28) !important; border-radius: 10px !important;
+  background: linear-gradient(145deg, #292025, #111014) !important; color: #ffdfe3 !important;
+}
+.btn-unlock-cyber {
+  position: relative; z-index: 1; border-radius: 13px !important; clip-path: none !important;
+  background: linear-gradient(115deg, #ff334c 0%, #c80c28 48%, #790616 100%) !important;
+  box-shadow: 0 12px 30px rgba(216, 9, 38, .34), inset 0 1px rgba(255,255,255,.25) !important;
+  text-shadow: 0 2px 9px rgba(0,0,0,.35); transition: transform .18s ease, filter .18s ease;
+}
+.btn-unlock-cyber:hover { filter: brightness(1.12); transform: translateY(-2px); }
+.btn-unlock-cyber:disabled { opacity: .65; cursor: wait; }
+
+/* Post-login client portal: theme only, existing controls/handlers remain intact. */
+.client-shell {
+  position: relative !important; isolation: isolate; overflow: hidden;
+  background: radial-gradient(ellipse at 50% 0%, rgba(140, 4, 28, .24), transparent 45%), #050507 !important;
+}
+.client-shell::before {
+  content: ""; position: fixed; z-index: -1; inset: 0; pointer-events: none;
+  background: radial-gradient(circle at 88% 18%, rgba(238, 20, 48, .12), transparent 28%),
+              radial-gradient(circle at 6% 78%, rgba(130, 0, 18, .13), transparent 30%);
+}
+.client-shell [style*="background: #0c0c0e"],
+.client-shell [style*="background:#0c0c0e"] {
+  background: linear-gradient(145deg, rgba(28,16,20,.97), rgba(9,9,12,.98)) !important;
+  border-color: rgba(255,65,82,.2) !important;
+  box-shadow: 0 15px 34px rgba(0,0,0,.32), inset 0 1px rgba(255,255,255,.035) !important;
+}
+.client-shell [style*="border: 1px solid #1a1a1e"],
+.client-shell [style*="border: 1px dashed #1a1a1e"] {
+  border-color: rgba(255,65,82,.2) !important;
+}
+.client-shell [style*="background: #e50914"],
+.client-shell [style*="background:#e50914"] {
+  background: linear-gradient(115deg, #ff334c, #c60c29 55%, #790616) !important;
+  box-shadow: 0 10px 26px rgba(216,9,38,.26), inset 0 1px rgba(255,255,255,.18) !important;
+}
+.client-shell [style*="background: #b91c1c"] { background: linear-gradient(135deg,#e5243d,#970b20) !important; }
+.client-shell [style*="font-family: 'Anton'"] { text-shadow: 0 2px 18px rgba(240,15,44,.2); }
+.client-shell button { transition: transform .16s ease, filter .16s ease, box-shadow .16s ease; }
+.client-shell button:active { transform: scale(.975); }
+.client-shell button:focus-visible, .login-container button:focus-visible, .login-container input:focus-visible {
+  outline: 2px solid #ff5266 !important; outline-offset: 3px;
+}
+@media (max-height: 650px) {
+  .login-container { min-height: auto; padding-top: 18px !important; padding-bottom: 18px !important; }
+  .brand-logo-img { max-width: 145px !important; max-height: 145px; }
+  .login-sub { margin-bottom: 22px !important; }
+}

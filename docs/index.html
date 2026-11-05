@@ -1,68 +1,102 @@
-<!doctype html>
-<html lang="ar" dir="rtl">
+<!DOCTYPE html>
+<html lang="en" id="html-root" dir="ltr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#080609">
-  <meta name="description" content="Nacer_X_Rida secure access portal">
-  <title>Nacer_X_Rida | Secure Access</title>
-  <link rel="stylesheet" href="styles.css">
-  <script src="config.js" defer></script>
-  <script src="app.js" defer></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#050505" />
+  <title>Nacer_X_Rida</title>
+  <meta name="description" content="Nacer_X_Rida secure access portal." />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Nacer_X_Rida" />
+  <meta property="og:description" content="Nacer_X_Rida secure access portal." />
+  <meta property="og:image" content="public/opengraph-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Nacer_X_Rida" />
+  <meta name="twitter:image" content="public/opengraph-image.png" />
+
+  <link rel="icon" type="image/png" href="public/icon.png" />
+  <link rel="apple-touch-icon" href="public/apple-icon.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="src/styles.css" />
+  <link rel="stylesheet" href="src/nacer-theme.css" />
+
+  <style>
+    :root {
+      --bg-color: #050505;
+      --card-bg: #0c0c0e;
+      --border-color: #1a1a1e;
+      --accent-red: #e50914;
+      --text-main: #ffffff;
+      --text-muted: #71717a;
+      --font-title: 'Anton', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { background: var(--bg-color); color: var(--text-main); font-family: var(--font-mono); min-height: 100vh; overflow-x: hidden; display: flex; justify-content: center; }
+
+    #app { width: 100%; max-width: 440px; min-height: 100vh; display: flex; flex-direction: column; position: relative; }
+
+    .login-container { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; }
+    .brand-logo-img { max-width: 190px; width: 100%; height: auto; margin-bottom: 24px; filter: drop-shadow(0 0 20px rgba(229, 9, 20, 0.4)); object-fit: contain; }
+    .login-title { font-family: var(--font-title); font-size: 42px; letter-spacing: 2px; color: #fff; text-transform: uppercase; margin-bottom: 4px; }
+    .login-sub { font-size: 11px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 32px; font-weight: 600; }
+
+    .input-label-cyber { width: 100%; text-align: left; font-size: 10px; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 1.5px; text-transform: uppercase; display: flex; align-items: center; gap: 6px; }
+    .input-label-cyber::before { content: ""; width: 5px; height: 5px; background: var(--accent-red); }
+
+    .key-input-cyber-wrap { width: 100%; background: var(--card-bg); border: 1px solid var(--border-color); display: flex; align-items: center; padding: 4px; margin-bottom: 20px; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%); }
+    .key-input-cyber { flex: 1; background: transparent; border: none; outline: none; color: #fff; font-family: var(--font-mono); font-size: 13px; padding: 12px; text-align: center; font-weight: 700; letter-spacing: 1.5px; }
+    .key-input-cyber::placeholder { color: #3f3f46; }
+
+    .paste-btn-cyber { background: #18181c; border: 1px solid #2a2a30; color: #fff; padding: 10px 16px; font-family: var(--font-mono); font-size: 10px; font-weight: 700; cursor: pointer; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%); transition: background 0.2s; }
+
+    .btn-unlock-cyber { width: 100%; background: var(--accent-red); color: #ffffff; border: none; padding: 18px; font-family: var(--font-title); font-size: 22px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%); box-shadow: 0 8px 25px rgba(229, 9, 20, 0.35); margin-bottom: 18px; transition: transform 0.2s; }
+    .btn-unlock-cyber:active { transform: scale(0.98); }
+    .btn-unlock-cyber:disabled { opacity: .7; cursor: wait; }
+
+    .login-status { min-height: 18px; margin: 0 0 14px; font-size: 11px; line-height: 1.6; color: #fca5a5; font-weight: 600; }
+    .login-status[data-state="ok"] { color: #4ade80; }
+    .login-status[data-state="info"] { color: #a1a1aa; }
+  </style>
 </head>
 <body>
-  <div class="ambient ambient-one" aria-hidden="true"></div>
-  <div class="ambient ambient-two" aria-hidden="true"></div>
-  <div class="grid-overlay" aria-hidden="true"></div>
 
-  <main class="layout">
-    <section class="brand-side" aria-label="Nacer_X_Rida">
-      <div class="topline"><span class="pulse-dot"></span><span>بوابة الوصول الرسمية</span><span class="topline-code">NXR / 01</span></div>
-      <div class="emblem-wrap">
-        <div class="emblem-ring ring-outer"></div>
-        <div class="emblem-ring ring-inner"></div>
-        <img class="skull" src="skull-logo.png" alt="شعار الجمجمة الأحمر والأسود">
-        <div class="emblem-glow"></div>
+  <div id="app">
+    <div class="login-container">
+      <img src="logo.png" alt="Nacer_X_Rida" class="brand-logo-img" onerror="this.onerror=null; this.style.display='none';" />
+      <h1 class="login-title">Nacer_X_Rida</h1>
+      <p class="login-sub">SECURE ACCESS</p>
+
+      <div class="input-label-cyber">ACCESS KEY</div>
+      <div class="key-input-cyber-wrap">
+        <input type="text" id="access-key-input" class="key-input-cyber" placeholder="NXR-XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false" maxlength="40" />
+        <button type="button" class="paste-btn-cyber" id="paste-btn">PASTE</button>
       </div>
-      <p class="brand-kicker">REDEFINED ACCESS</p>
-      <h1 class="brand-title">Nacer<span>_X_</span>Rida</h1>
-      <p class="brand-description">هوية رقمية بطابع أسود وأحمر. أدخل مفتاح الوصول للتحقق من صلاحيته عبر الخادم.</p>
-      <div class="brand-meta">
-        <span><i></i> اتصال مشفّر عبر HTTPS</span>
-        <span class="meta-divider"></span>
-        <span>ACCESS GATE</span>
-      </div>
-    </section>
 
-    <section class="login-side">
-      <div class="login-card">
-        <div class="card-topline"><span class="card-index">01 — AUTHENTICATION</span><span class="secure-mark"><span></span> SECURE</span></div>
-        <div class="card-heading">
-          <p class="section-label">IDENTITY CHECK</p>
-          <h2>تسجيل <span>الدخول</span></h2>
-          <p class="card-subtitle">أدخل مفتاحك لإرسال طلب التحقق إلى الخادم.</p>
-        </div>
+      <button type="button" class="btn-unlock-cyber" id="unlock-btn">UNLOCK</button>
 
-        <form id="login-form" novalidate>
-          <label for="access-key">مفتاح الوصول <span>ACCESS KEY</span></label>
-          <div class="input-shell">
-            <span class="key-icon" aria-hidden="true">⌘</span>
-            <input id="access-key" name="key" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="160" placeholder="XXXX-XXXX-XXXX" required>
-            <button class="paste-button" type="button" id="paste-button" aria-label="لصق المفتاح">لصق</button>
-          </div>
-          <button class="submit-button" type="submit" id="submit-button">
-            <span class="button-label">تحقق من المفتاح</span>
-            <span class="button-arrow" aria-hidden="true">↗</span>
-          </button>
-          <p id="login-status" class="status-message" role="status" aria-live="polite"></p>
-        </form>
+      <p id="login-status" class="login-status" role="status" aria-live="polite"></p>
 
-        <div class="card-footnote"><span class="lock-icon">◆</span> لا يتم حفظ المفتاح في هذا المتصفح.</div>
-      </div>
-      <p class="side-caption">NACER_X_RIDA <span>•</span> ACCESS PORTAL</p>
-    </section>
-  </main>
+      <p style="font-size: 11px; color: var(--text-muted); line-height: 1.6;">
+        No key? Contact your seller.<br>
+        <span style="font-size: 10px; color: #3f3f46;">Time starts upon connection.</span>
+      </p>
+    </div>
+  </div>
 
-  <footer class="page-footer"><span>© <span id="year">2026</span> NACER_X_RIDA</span><span>BUILT FOR A CLEAN, SECURE LOGIN FLOW</span></footer>
+  <script type="module" src="src/app.js"></script>
+  <script>
+    document.getElementById('paste-btn').addEventListener('click', async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text) document.getElementById('access-key-input').value = text.trim();
+      } catch (err) { alert('Please allow clipboard permission'); }
+    });
+  </script>
 </body>
 </html>
