@@ -37,6 +37,17 @@ function saveSession(key, me) {
   localStorage.setItem('powerup_session', JSON.stringify({ key, me }));
 }
 
+const REASONS = {
+  missing_params: 'Incomplete request.',
+  invalid_code: 'That key format is not valid.',
+  code_not_found: 'Key not found. Check it and try again.',
+  code_disabled: 'This key has been disabled.',
+  code_expired: 'This key has expired.',
+  expired: 'Your activation on this device has expired.',
+  max_devices_reached: 'This key is already used on the maximum number of devices.',
+  too_many_requests: 'Too many attempts. Wait a few minutes and try again.'
+};
+
 async function authenticate() {
   const input = els.input();
   const button = els.unlock();
@@ -60,6 +71,8 @@ async function authenticate() {
       credentials: 'omit',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify({
+        code: key,
+        device_id: device.hwid,
         key,
         hwid: device.hwid,
         device_model: device.device_model,
@@ -68,12 +81,14 @@ async function authenticate() {
     });
 
     const data = await response.json().catch(() => ({}));
-    if (!response.ok || data.ok !== true) {
-      throw new Error(data.error || `Authentication failed (${response.status})`);
+    const accepted = data.valid === true || data.ok === true;
+    if (!accepted) {
+      throw new Error(data.message || data.error || REASONS[data.reason] || `Authentication failed (${response.status})`);
     }
 
-    saveSession(key, data.me || {});
-    setStatus('ACCESS GRANTED', data.me?.expires_at ? `Active until ${new Date(data.me.expires_at).toLocaleString()}` : 'Authentication successful.', true);
+    const me = data.me || { expires_at: data.expires_at || null, bound_hwid: device.hwid };
+    saveSession(key, me);
+    setStatus('ACCESS GRANTED', me.expires_at ? `Active until ${new Date(me.expires_at).toLocaleString()}` : 'Authentication successful.', true);
     button.textContent = 'AUTHENTICATED';
   } catch (error) {
     setStatus('ACCESS FAILED', error.message === 'Failed to fetch' ? 'Unable to reach the access server.' : error.message, true);
