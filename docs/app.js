@@ -16,10 +16,41 @@ const CONFIG = window.NXR_CONFIG || {};
 const ENDPOINT = CONFIG.endpoint || '/api/login';
 const CONTRACT = CONFIG.contract || 'portal';
 const TIMEOUT_MS = Number(CONFIG.timeoutMs) || 75000;
+const HOME_URL = CONFIG.homeUrl || 'home.html';
+const REDIRECT_DELAY = Number(CONFIG.redirectDelay) || 900;
+const SESSION_KEY = 'nxr_session';
 
 const DEFAULT_LABEL = buttonLabel ? buttonLabel.textContent : 'تحقق من المفتاح';
 
 document.getElementById('year').textContent = String(new Date().getFullYear());
+
+/* ------------------------------------------------------------------ *
+ * حالة الوصول عند تحميل الصفحة
+ * ------------------------------------------------------------------ */
+
+(function checkExistingSession() {
+  const params = new URLSearchParams(window.location.search);
+
+  if (params.get('expired') === '1') {
+    setStatus('انتهت صلاحية جلستك السابقة. أدخل المفتاح مرة أخرى للمتابعة.', 'error');
+    return;
+  }
+
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (!raw) return;
+    const session = JSON.parse(raw);
+    if (!session || !session.expires_at) return;
+    const date = new Date(session.expires_at);
+    const permanent = !Number.isNaN(date.getTime()) && date.getFullYear() >= 9000;
+    const stillValid = permanent || (!Number.isNaN(date.getTime()) && date.getTime() > Date.now());
+    if (stillValid) {
+      setStatus('لديك جلسة نشطة بالفعل. اضغط «تحقق من المفتاح» للمتابعة أو أدخل مفتاحًا آخر.', 'success');
+    } else {
+      sessionStorage.removeItem(SESSION_KEY);
+    }
+  } catch { /* تجاهل */ }
+})();
 
 /* ------------------------------------------------------------------ *
  * بصمة الجهاز — معرّف ثابت لكل متصفح، لا يحتوي أي بيانات شخصية
@@ -144,6 +175,20 @@ form.addEventListener('submit', async event => {
   const key = keyInput.value.trim();
 
   if (!key) {
+    // إن كانت هناك جلسة صالحة محفوظة، اسمح بالمرور مباشرة للصفحة الرئيسية
+    try {
+      const raw = sessionStorage.getItem(SESSION_KEY);
+      const session = raw ? JSON.parse(raw) : null;
+      if (session && session.expires_at) {
+        const date = new Date(session.expires_at);
+        const permanent = !Number.isNaN(date.getTime()) && date.getFullYear() >= 9000;
+        if (permanent || (!Number.isNaN(date.getTime()) && date.getTime() > Date.now())) {
+          window.location.assign(HOME_URL);
+          return;
+        }
+      }
+    } catch { /* تجاهل */ }
+
     setStatus('أدخل مفتاح الوصول أولًا.', 'error');
     keyInput.focus();
     return;
@@ -178,9 +223,26 @@ form.addEventListener('submit', async event => {
     }
 
     const expiry = formatExpiry(data.expires_at);
-    setStatus('تم التحقق من المفتاح بنجاح.' + expiry, 'success');
+    setStatus('تم التحقق من المفتاح بنجاح.' + expiry + ' جارٍ فتح الصفحة الرئيسية...', 'success');
+    setBusy(true, 'جارٍ فتح الصفحة...');
+
+    // حفظ الجلسة لتمكين الصفحة الرئيسية من التحقق منها
+    try {
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+        key,
+        device_id: getDeviceId(),
+        expires_at: data.expires_at || null,
+        started_at: new Date().toISOString(),
+      }));
+    } catch { /* التخزين غير متاح — نكمل الانتقال على أي حال */ }
+
     keyInput.value = '';
     keyInput.blur();
+
+    // الانتقال إلى الصفحة الرئيسية بعد لحظة قصيرة لإظهار رسالة النجاح
+    setTimeout(() => {
+      window.location.assign(HOME_URL);
+    }, REDIRECT_DELAY);
   } catch (error) {
     clearTimeout(slowTimer);
 
