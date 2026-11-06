@@ -302,10 +302,47 @@ function attachDashboardEvents() {
   const happBtn = document.getElementById('happ-btn');
   if (happBtn) {
     happBtn.addEventListener('click', () => {
+      const key = (state.auth && state.auth.key) || '';
+      const ua = navigator.userAgent || '';
+      const isAndroid = /Android/i.test(ua);
+      const isIOS = /iPhone|iPad|iPod/i.test(ua);
+
+      // 1) انسخ الكود تلقائياً حتى يلصقه المستخدم داخل التطبيق
+      if (key && navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(key).catch(() => {});
+      }
+
+      // 2) جهّز رابط الفتح: إن وُجد رابط اشتراك استخدم happ://add، وإلا افتح التطبيق فقط
+      const subUrl = String(CONFIG.HAPP_SUB_URL || '').trim();
+      const deepLink = subUrl ? ('happ://add/' + encodeURIComponent(subUrl)) : 'happ://';
+
+      // 3) راقب هل التطبيق فتح فعلاً (الصفحة تُخفى عند الانتقال للتطبيق)
+      let appOpened = false;
+      const markOpened = () => { appOpened = true; };
+      document.addEventListener('visibilitychange', markOpened, { once: true });
+      window.addEventListener('blur', markOpened, { once: true });
+      window.addEventListener('pagehide', markOpened, { once: true });
+
+      try { window.location.href = deepLink; } catch (e) {}
+
+      // 4) إن لم يُفتح التطبيق خلال 1.6 ثانية → افتح المتجر أو اشرح للمستخدم
+      setTimeout(() => {
+        if (appOpened || document.hidden) return;
+        if (isAndroid) {
+          window.location.href = CONFIG.HAPP_ANDROID_URL || 'https://play.google.com/store/apps/details?id=com.happ.proxy';
+        } else if (isIOS) {
+          window.location.href = CONFIG.HAPP_IOS_URL || 'https://apps.apple.com/app/happ-proxy-utility/id6504287215';
+        } else {
+          alert(
+            'Happ VPN هو تطبيق للهاتف فقط.\n\n' +
+            'تم نسخ كودك تلقائياً:\n' + key + '\n\n' +
+            'افتح Happ على هاتفك ثم الصق الكود لإضافة الاشتراك.'
+          );
+        }
+      }, 1600);
+
       state.isConnected = true;
       localStorage.setItem('nxr_vpn_connected', 'true');
-      window.location.href = 'happ://';
-      renderDashboard();
     });
   }
 

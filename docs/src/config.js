@@ -31,6 +31,10 @@ export const CONFIG = {
   HAPP_IOS_URL: 'https://apps.apple.com/app/happ-proxy-utility/id6504287215',
   HAPP_ANDROID_URL: 'https://play.google.com/store/apps/details?id=com.happ.proxy',
 
+  // رابط الاشتراك (Subscription URL) من لوحة التحكم — اتركه فارغاً إن لم يكن لديك.
+  // إذا وُضع، سيفتح الزر Happ ويضيف الاشتراك مباشرة عبر happ://add/<url>
+  HAPP_SUB_URL: '',
+
   MARKER_TYPES: [
     'POWER',
     'DREAM',
