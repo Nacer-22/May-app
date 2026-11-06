@@ -33,16 +33,6 @@ if (savedSession) {
   } catch (e) {}
 }
 
-/*
- * resolveHappSubscriptionUrl
- * ------------------------------------------------------------------
- * تُرجع رابط الاشتراك (Subscription URL) الذي يفتحه Happ مباشرة.
- * الأولوية:
- *   1) CONFIG.HAPP_SUB_URL            رابط جاهز
- *   2) CONFIG.HAPP_SUB_URL_TEMPLATE   قالب يحتوي {key} مثل https://host/sub/{key}
- *   3) ردّ السيرفر /api/happ (إن كان SERVER_SYNC) — يُقرأ فقط، دون أي تعديل عليه
- * لا تُعدّل هذه الدالة أي ملف أو بيانات يرسلها الموقع إلى التطبيق.
- */
 async function resolveHappSubscriptionUrl(key) {
   const direct = String(CONFIG.HAPP_SUB_URL || '').trim();
   if (direct) return direct;
@@ -60,10 +50,8 @@ async function resolveHappSubscriptionUrl(key) {
       });
       if (res.ok) {
         const data = await res.json();
-        // نقرأ الحقول الجاهزة فقط — لا نغيّر شكل الردّ
         const candidate = data.sub_url || data.subscription_url || data.subUrl || '';
         if (candidate) return String(candidate).trim();
-        // إن أعاد السيرفر رابط happ://add جاهزاً نستخدمه كما هو
         const dl = String(data.deepLink || '');
         if (dl.startsWith('happ://add/')) return dl.slice('happ://add/'.length);
       }
@@ -98,7 +86,7 @@ function renderDashboard() {
   const statusText = state.isConnected ? 'ONLINE' : 'OFFLINE';
 
   root.innerHTML = `
-    <div class="client-shell" style="background-color: #050505; color: #cacaca; min-height: 100vh; width: 100%; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 20px 16px 110px 16px; box-sizing: border-box; font-family: 'JetBrains Mono', monospace, sans-serif;">
+    <div style="background-color: #050505; color: #cacaca; min-height: 100vh; width: 100%; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 20px 16px 110px 16px; box-sizing: border-box; font-family: 'JetBrains Mono', monospace, sans-serif;">
       
       <!-- الشريط العلوي للحالة -->
       <div style="width: 100%; max-width: 400px; display: flex; justify-content: space-between; align-items: center; padding: 10px 4px;">
@@ -149,7 +137,7 @@ function renderStatusTab(me) {
       <div style="width: 100%; background: #0c0c0e; border: 1px solid #1a1a1e; border-radius: 14px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box;">
         <div style="display: flex; align-items: center; gap: 10px;">
           <span style="font-size: 10px; color: #71717a;">KEY</span>
-          <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 1px; color: #ffffff;">${state.auth.key || 'NXR-XXXX-XXXX-XXXX'}</span>
+          <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 1px; color: #ffffff;">${state.auth.key || 'Nacer-XXXX-XXXX-XXXX'}</span>
         </div>
         <button id="copy-key-btn" style="background: #18181c; border: none; border-radius: 8px; color: #ffffff; padding: 8px 12px; font-size: 10px; font-weight: 700; cursor: pointer;">COPY</button>
       </div>
@@ -174,7 +162,7 @@ function renderFeaturesTab(me) {
   // التأكد من أن POWER هو الخيار الافتراضي دائماً
   if (!f.marker) {
     f.marker = { enabled: true, type: 'POWER' };
-  } else if (!f.marker.type || f.marker.type === 'DREAM') {
+  } else if (!f.marker.type || f.marker.type === 'PHANTOM') {
     f.marker.type = 'POWER';
   }
 
@@ -182,7 +170,7 @@ function renderFeaturesTab(me) {
   const aimpoint = f.aimpoint || { enabled: false };
   const aimLag = f.aimLag || { enabled: false };
 
-  // قائمة أنماط التحديد المتاحة
+  // إزالة PHANTOM من القائمة
   const markerTypes = ['POWER', 'DREAM', 'ICE WALL', 'MOCO', 'CLU', 'SHIROU', 'IRIS'];
 
   return `
@@ -265,8 +253,8 @@ function renderManageTab() {
           <span style="background: #222226; color: #ffffff; font-size: 9px; font-weight: 700; padding: 4px 8px; border-radius: 4px;">LOCKED TO THIS KEY</span>
         </div>
         <div style="font-family: 'Anton', sans-serif; font-size: 32px; color: #ffffff; margin-bottom: 2px;">Nacer_X_Rida</div>
-        <div style="font-size: 12px; color: #71717a; margin-bottom: 8px;">${(state.auth.me && state.auth.me.device_model) || 'This Device'}</div>
-        <div style="font-size: 10.5px; color: #3f3f46; word-break: break-all; margin-bottom: 16px;">HWID: ${(state.auth.me && state.auth.me.bound_hwid) || localStorage.getItem('nxr_hwid') || 'not bound'}</div>
+        <div style="font-size: 12px; color: #71717a; margin-bottom: 8px;">Android Device</div>
+        <div style="font-size: 10.5px; color: #3f3f46; word-break: break-all; margin-bottom: 16px;">HWID: ${(state.auth.me && state.auth.me.bound_hwid) || state.hwid || 'Nacer-DEV-ACTIVE'}</div>
 
         <button id="unbind-hwid-btn" style="width: 100%; background: #141418; border: 1px solid #222228; color: #71717a; padding: 14px; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 700; letter-spacing: 1px; cursor: pointer; border-radius: 10px;">
           RESET DEVICE LOCK (UNBIND)
@@ -346,18 +334,13 @@ function attachDashboardEvents() {
       const isAndroid = /Android/i.test(ua);
       const isIOS = /iPhone|iPad|iPod/i.test(ua);
 
-      // 1) انسخ الكود تلقائياً حتى يلصقه المستخدم داخل التطبيق
       if (key && navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(key).catch(() => {});
       }
 
-      // 2) احصل على رابط الاشتراك — بدون أي تعديل على الملفات/البيانات التي يرسلها الموقع
       const subUrl = await resolveHappSubscriptionUrl(key);
-
-      // 3) ابنِ الرابط بصيغة Happ الرسمية: happ://add/<رابط الاشتراك كما هو>
       const deepLink = subUrl ? ('happ://add/' + subUrl) : 'happ://';
 
-      // 4) راقب هل التطبيق فتح فعلاً (الصفحة تُخفى عند الانتقال للتطبيق)
       let appOpened = false;
       const markOpened = () => { appOpened = true; };
       document.addEventListener('visibilitychange', markOpened, { once: true });
@@ -366,7 +349,6 @@ function attachDashboardEvents() {
 
       try { window.location.href = deepLink; } catch (e) {}
 
-      // 5) إن لم يُفتح التطبيق خلال 1.6 ثانية → المتجر أو شرح للمستخدم
       setTimeout(() => {
         if (appOpened || document.hidden) return;
         if (isAndroid) {
@@ -374,18 +356,16 @@ function attachDashboardEvents() {
         } else if (isIOS) {
           window.location.href = CONFIG.HAPP_IOS_URL || 'https://apps.apple.com/app/happ-proxy-utility/id6504287215';
         } else {
-          alert(
-            'Happ VPN هو تطبيق للهاتف فقط.\n\n' +
-            (subUrl
-              ? 'رابط اشتراكك:\n' + subUrl + '\n\n'
-              : 'تم نسخ كودك تلقائياً:\n' + key + '\n\n') +
-            'افتح Happ على هاتفك ثم أضف الاشتراك.'
-          );
+          alert('Happ VPN is a mobile app.\n\n' +
+            (subUrl ? 'Your subscription link:\n' + subUrl + '\n\n'
+                    : 'Your key was copied automatically:\n' + key + '\n\n') +
+            'Open Happ on your phone and add the subscription.');
         }
       }, 1600);
 
       state.isConnected = true;
       localStorage.setItem('nxr_vpn_connected', 'true');
+      renderDashboard();
     });
   }
 
@@ -421,51 +401,16 @@ function attachDashboardEvents() {
     });
   });
 
-  const unbindBtn = document.getElementById('unbind-hwid-btn');
-  if (unbindBtn) {
-    unbindBtn.addEventListener('click', async () => {
-      if (!CONFIG.SERVER_SYNC) {
-        alert('Device lock reset is handled by support. Contact your seller.');
-        return;
-      }
-      unbindBtn.disabled = true;
-      unbindBtn.textContent = 'RESETTING...';
-      try {
-        const res = await fetch(`${CONFIG.API_BASE}/api/unbind-hwid`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key: state.auth.key })
-        });
-        const data = await res.json().catch(() => ({}));
-        alert(data.message || (res.ok ? 'Device lock removed.' : 'Could not reset the device lock.'));
-        if (res.ok) {
-          state.auth.me.bound_hwid = null;
-          localStorage.setItem('nxr_session', JSON.stringify({ key: state.auth.key, me: state.auth.me }));
-          renderDashboard();
-        }
-      } catch (e) {
-        alert('Network error.');
-      } finally {
-        unbindBtn.disabled = false;
-        unbindBtn.textContent = 'RESET DEVICE LOCK (UNBIND)';
-      }
-    });
-  }
-
   const logoutBtn = document.getElementById('logout-btn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', logout);
   }
 }
+
 async function saveFeatures(f) {
   localStorage.setItem('nxr_session', JSON.stringify({ key: state.auth.key, me: state.auth.me, features: f }));
-  if (!CONFIG.SERVER_SYNC) return;
   try {
-    await fetch(`${CONFIG.API_BASE}/api/features`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ features: f, key: state.auth.key })
-    });
+    await fetch('/api/features', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ features: f, key: state.auth.key }) });
   } catch (e) {}
 }
 
@@ -478,65 +423,16 @@ function logout() {
   location.reload();
 }
 
-/* ------------------------------------------------------------------ *
- * Login flow
- * ------------------------------------------------------------------ */
-
 const REASON_MESSAGES = {
-  missing_params: 'Incomplete request.',
-  invalid_code: 'That key format is not valid.',
-  code_not_found: 'Key not found. Check it and try again.',
-  code_disabled: 'This key has been disabled.',
-  code_expired: 'This key has expired.',
-  expired: 'Your activation on this device has expired.',
-  max_devices_reached: 'This key is already used on the maximum number of devices.',
-  too_many_requests: 'Too many attempts. Wait a few minutes and try again.'
+  code_not_found: 'This key was not found. Check it and try again.',
+  not_found: 'This key was not found. Check it and try again.',
+  expired: 'This key has expired.',
+  banned: 'This key has been disabled.',
+  hwid_mismatch: 'This key is locked to another device.',
+  device_mismatch: 'This key is locked to another device.',
+  too_many_requests: 'Too many attempts. Please wait a moment.',
+  invalid: 'Key was not accepted.'
 };
-
-function setStatus(message, stateName) {
-  const node = document.getElementById('login-status');
-  if (!node) return;
-  node.textContent = message || '';
-  if (stateName) node.setAttribute('data-state', stateName);
-  else node.removeAttribute('data-state');
-}
-
-function formatKey(val) {
-  const raw = val.toUpperCase().replace(/[^A-Z0-9]/g, '');
-  if (raw.startsWith('NACER')) {
-    const groups = (raw.slice(5, 17).match(/.{1,4}/g) || []);
-    return ['NACER', ...groups].join('-');
-  }
-  return (raw.slice(0, 16).match(/.{1,4}/g) || []).join('-');
-}
-
-async function getRealClientDevice() {
-  let hwid = localStorage.getItem('nxr_hwid');
-  if (!hwid) {
-    const seed = [
-      navigator.userAgent,
-      navigator.language,
-      screen.width + 'x' + screen.height,
-      screen.colorDepth,
-      new Date().getTimezoneOffset()
-    ].join('|');
-    let hash = 0x811c9dc5;
-    for (let i = 0; i < seed.length; i++) {
-      hash ^= seed.charCodeAt(i);
-      hash = Math.imul(hash, 0x01000193) >>> 0;
-    }
-    hwid = 'NXR-' + hash.toString(16).toUpperCase().padStart(8, '0');
-    localStorage.setItem('nxr_hwid', hwid);
-  }
-  const ua = navigator.userAgent;
-  let os = 'Unknown';
-  if (/Android/i.test(ua)) os = 'Android';
-  else if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS';
-  else if (/Windows/i.test(ua)) os = 'Windows';
-  else if (/Mac OS X/i.test(ua)) os = 'macOS';
-  else if (/Linux/i.test(ua)) os = 'Linux';
-  return { hwid, device_model: os + ' Device', device_os: os };
-}
 
 async function authenticate(key, dev) {
   const contract = CONFIG.AUTH_CONTRACT === 'redeem' ? 'redeem' : 'verify';
@@ -590,11 +486,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const unlockBtn = document.getElementById('unlock-btn');
 
   if (keyInput) {
-    keyInput.addEventListener('input', () => {
-      keyInput.value = formatKey(keyInput.value);
-    });
-    keyInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') unlockBtn.click();
+    keyInput.addEventListener('input', (e) => {
+      keyInput.value = formatKey(e.target.value);
     });
   }
 
@@ -602,42 +495,30 @@ document.addEventListener('DOMContentLoaded', () => {
     unlockBtn.addEventListener('click', async () => {
       const val = keyInput ? keyInput.value.trim() : '';
       if (!val) {
-        setStatus('Enter your access key first.');
-        keyInput && keyInput.focus();
+        alert('Please enter your access key');
         return;
       }
 
-      unlockBtn.textContent = 'AUTHENTICATING...';
+      unlockBtn.textContent = 'Authenticating...';
       unlockBtn.disabled = true;
-      setStatus('Contacting the verification server...', 'info');
-
-      const slowTimer = setTimeout(() => {
-        setStatus('Server is waking up, this can take up to a minute...', 'info');
-      }, 6000);
 
       try {
         const dev = await getRealClientDevice();
         const me = await authenticate(val, dev);
-        clearTimeout(slowTimer);
 
         state.auth.loggedIn = true;
         state.auth.key = val;
         state.auth.me = { ...state.auth.me, ...me };
         localStorage.setItem('nxr_session', JSON.stringify({ key: val, me: state.auth.me }));
-        setStatus('Access granted. Loading your panel...', 'ok');
-
-        setTimeout(() => {
-          renderDashboard();
-          unlockBtn.textContent = 'UNLOCK';
-          unlockBtn.disabled = false;
-        }, 450);
+        renderDashboard();
+        unlockBtn.textContent = 'Unlock';
+        unlockBtn.disabled = false;
       } catch (err) {
-        clearTimeout(slowTimer);
         const message = err && err.name === 'AbortError'
           ? 'The server did not respond in time. Try again.'
-          : (err && err.message) || 'Network error.';
-        setStatus(message);
-        unlockBtn.textContent = 'UNLOCK';
+          : (err && err.message) || 'Network error';
+        alert(message);
+        unlockBtn.textContent = 'Unlock';
         unlockBtn.disabled = false;
       }
     });
@@ -647,3 +528,28 @@ document.addEventListener('DOMContentLoaded', () => {
     renderDashboard();
   }
 });
+
+function formatKey(val) {
+  const raw = String(val || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (raw.startsWith('NACER')) {
+    const groups = (raw.slice(5, 17).match(/.{1,4}/g) || []);
+    return ['NACER', ...groups].join('-');
+  }
+  return (raw.slice(0, 16).match(/.{1,4}/g) || []).join('-');
+}
+
+async function getRealClientDevice() {
+  let hwid = localStorage.getItem('nxr_hwid');
+  if (!hwid) {
+    hwid = `Nacer-${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
+    localStorage.setItem('nxr_hwid', hwid);
+  }
+  state.hwid = hwid;
+  const ua = navigator.userAgent || '';
+  let os = 'Android';
+  if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS';
+  else if (/Windows/i.test(ua)) os = 'Windows';
+  else if (/Mac OS X/i.test(ua)) os = 'macOS';
+  else if (/Linux/i.test(ua)) os = 'Linux';
+  return { hwid, device_model: os + ' Device', device_os: os };
+}
