@@ -539,11 +539,24 @@ function formatKey(val) {
 }
 
 async function getRealClientDevice() {
-  let hwid = localStorage.getItem('nxr_hwid');
-  if (!hwid) {
-    hwid = `Nacer-${Math.random().toString(16).slice(2, 10).toUpperCase()}`;
-    localStorage.setItem('nxr_hwid', hwid);
+  // Match the original activation page's device ID contract exactly.
+  const KEY = 'nacer_device_id';
+  const VALID = /^DEV-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  let hwid = localStorage.getItem(KEY);
+
+  if (!hwid || !VALID.test(hwid)) {
+    if (window.crypto && typeof crypto.randomUUID === 'function') {
+      hwid = 'DEV-' + crypto.randomUUID();
+    } else {
+      const bytes = new Uint8Array(16);
+      crypto.getRandomValues(bytes);
+      const hex = Array.from(bytes, x => x.toString(16).padStart(2, '0')).join('');
+      hwid = 'DEV-' + hex.slice(0, 8) + '-' + hex.slice(8, 12) + '-' +
+        hex.slice(12, 16) + '-' + hex.slice(16, 20) + '-' + hex.slice(20, 32);
+    }
+    localStorage.setItem(KEY, hwid);
   }
+
   state.hwid = hwid;
   const ua = navigator.userAgent || '';
   let os = 'Android';
