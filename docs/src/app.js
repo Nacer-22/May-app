@@ -427,6 +427,7 @@ const REASON_MESSAGES = {
   code_not_found: 'This key is not in the verification server database. Copy it again from your dashboard. If it is visible there but still rejected here, the dashboard and verification service are not reading the same database.',
   not_found: 'This key was not found. Check it and try again.',
   missing_params: 'The key request was incomplete. Refresh the page and try again.',
+  invalid_format: 'The key format is invalid. Use Nacer-XXXX-XXXX-XXXX with 12 hexadecimal characters.',
   code_disabled: 'This key has been disabled by the administrator.',
   banned: 'This key has been disabled.',
   code_expired: 'This key has expired.',
