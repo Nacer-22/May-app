@@ -33,6 +33,45 @@ if (savedSession) {
   } catch (e) {}
 }
 
+/*
+ * resolveHappSubscriptionUrl
+ * ------------------------------------------------------------------
+ * تُرجع رابط الاشتراك (Subscription URL) الذي يفتحه Happ مباشرة.
+ * الأولوية:
+ *   1) CONFIG.HAPP_SUB_URL            رابط جاهز
+ *   2) CONFIG.HAPP_SUB_URL_TEMPLATE   قالب يحتوي {key} مثل https://host/sub/{key}
+ *   3) ردّ السيرفر /api/happ (إن كان SERVER_SYNC) — يُقرأ فقط، دون أي تعديل عليه
+ * لا تُعدّل هذه الدالة أي ملف أو بيانات يرسلها الموقع إلى التطبيق.
+ */
+async function resolveHappSubscriptionUrl(key) {
+  const direct = String(CONFIG.HAPP_SUB_URL || '').trim();
+  if (direct) return direct;
+
+  const tpl = String(CONFIG.HAPP_SUB_URL_TEMPLATE || '').trim();
+  if (tpl && key) return tpl.replace(/\{key\}/g, encodeURIComponent(key));
+
+  if (CONFIG.SERVER_SYNC) {
+    try {
+      const base = String(CONFIG.API_BASE || '');
+      const res = await fetch(base + '/api/happ', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        // نقرأ الحقول الجاهزة فقط — لا نغيّر شكل الردّ
+        const candidate = data.sub_url || data.subscription_url || data.subUrl || '';
+        if (candidate) return String(candidate).trim();
+        // إن أعاد السيرفر رابط happ://add جاهزاً نستخدمه كما هو
+        const dl = String(data.deepLink || '');
+        if (dl.startsWith('happ://add/')) return dl.slice('happ://add/'.length);
+      }
+    } catch (e) {}
+  }
+  return '';
+}
+
 function formatCountdown(targetIso) {
   if (!targetIso) return '29D 23H';
   const diff = new Date(targetIso).getTime() - Date.now();
@@ -301,7 +340,7 @@ function attachDashboardEvents() {
 
   const happBtn = document.getElementById('happ-btn');
   if (happBtn) {
-    happBtn.addEventListener('click', () => {
+    happBtn.addEventListener('click', async () => {
       const key = (state.auth && state.auth.key) || '';
       const ua = navigator.userAgent || '';
       const isAndroid = /Android/i.test(ua);
@@ -312,11 +351,13 @@ function attachDashboardEvents() {
         navigator.clipboard.writeText(key).catch(() => {});
       }
 
-      // 2) جهّز رابط الفتح: إن وُجد رابط اشتراك استخدم happ://add، وإلا افتح التطبيق فقط
-      const subUrl = String(CONFIG.HAPP_SUB_URL || '').trim();
-      const deepLink = subUrl ? ('happ://add/' + encodeURIComponent(subUrl)) : 'happ://';
+      // 2) احصل على رابط الاشتراك — بدون أي تعديل على الملفات/البيانات التي يرسلها الموقع
+      const subUrl = await resolveHappSubscriptionUrl(key);
 
-      // 3) راقب هل التطبيق فتح فعلاً (الصفحة تُخفى عند الانتقال للتطبيق)
+      // 3) ابنِ الرابط بصيغة Happ الرسمية: happ://add/<رابط الاشتراك كما هو>
+      const deepLink = subUrl ? ('happ://add/' + subUrl) : 'happ://';
+
+      // 4) راقب هل التطبيق فتح فعلاً (الصفحة تُخفى عند الانتقال للتطبيق)
       let appOpened = false;
       const markOpened = () => { appOpened = true; };
       document.addEventListener('visibilitychange', markOpened, { once: true });
@@ -325,7 +366,7 @@ function attachDashboardEvents() {
 
       try { window.location.href = deepLink; } catch (e) {}
 
-      // 4) إن لم يُفتح التطبيق خلال 1.6 ثانية → افتح المتجر أو اشرح للمستخدم
+      // 5) إن لم يُفتح التطبيق خلال 1.6 ثانية → المتجر أو شرح للمستخدم
       setTimeout(() => {
         if (appOpened || document.hidden) return;
         if (isAndroid) {
@@ -335,8 +376,10 @@ function attachDashboardEvents() {
         } else {
           alert(
             'Happ VPN هو تطبيق للهاتف فقط.\n\n' +
-            'تم نسخ كودك تلقائياً:\n' + key + '\n\n' +
-            'افتح Happ على هاتفك ثم الصق الكود لإضافة الاشتراك.'
+            (subUrl
+              ? 'رابط اشتراكك:\n' + subUrl + '\n\n'
+              : 'تم نسخ كودك تلقائياً:\n' + key + '\n\n') +
+            'افتح Happ على هاتفك ثم أضف الاشتراك.'
           );
         }
       }, 1600);
