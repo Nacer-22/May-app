@@ -530,12 +530,18 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function formatKey(val) {
-  const raw = String(val || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-  if (raw.startsWith('NACER')) {
-    const groups = (raw.slice(5, 17).match(/.{1,4}/g) || []);
-    return ['NACER', ...groups].join('-');
+  // The key server stores the exact prefix "Nacer" (case-sensitive).
+  // Normalize separators and suffix casing without changing that prefix.
+  const raw = String(val || '').replace(/[^A-Za-z0-9]/g, '');
+  const normalized = raw.toUpperCase();
+
+  if (normalized.startsWith('NACER')) {
+    const suffix = normalized.slice(5, 17);
+    const groups = suffix.match(/.{1,4}/g) || [];
+    return ['Nacer', ...groups].join('-');
   }
-  return (raw.slice(0, 16).match(/.{1,4}/g) || []).join('-');
+
+  return (normalized.slice(0, 16).match(/.{1,4}/g) || []).join('-');
 }
 
 async function getRealClientDevice() {
