@@ -424,61 +424,81 @@ function logout() {
 }
 
 const REASON_MESSAGES = {
-  code_not_found: 'This key was not found. Check it and try again.',
+  code_not_found: 'This key is not in the verification server database. Copy it again from your dashboard. If it is visible there but still rejected here, the dashboard and verification service are not reading the same database.',
   not_found: 'This key was not found. Check it and try again.',
-  expired: 'This key has expired.',
+  missing_params: 'The key request was incomplete. Refresh the page and try again.',
+  code_disabled: 'This key has been disabled by the administrator.',
   banned: 'This key has been disabled.',
+  code_expired: 'This key has expired.',
+  expired: 'This key activation has expired.',
+  max_devices_reached: 'This key has reached its device limit. Ask the administrator to reset its device lock.',
   hwid_mismatch: 'This key is locked to another device.',
   device_mismatch: 'This key is locked to another device.',
-  too_many_requests: 'Too many attempts. Please wait a moment.',
+  too_many_requests: 'Too many attempts. Please wait a moment and try again.',
   invalid: 'Key was not accepted.'
 };
 
 async function authenticate(key, dev) {
-  const contract = CONFIG.AUTH_CONTRACT === 'redeem' ? 'redeem' : 'verify';
+  const endpoint = String(CONFIG.AUTH_API_URL || '').trim();
+  if (!endpoint) throw new Error('The verification server URL is not configured.');
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), Number(CONFIG.AUTH_TIMEOUT) || 75000);
 
-  const payload = contract === 'verify'
-    ? { code: key, device_id: dev.hwid }
-    : { key, hwid: dev.hwid, device_model: dev.device_model, device_os: dev.device_os };
-
-  let res, data;
   try {
-    res = await fetch(CONFIG.AUTH_API_URL, {
+    const res = await fetch(endpoint, {
       method: 'POST',
       mode: 'cors',
       cache: 'no-store',
       credentials: 'omit',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify(payload),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Cache-Control': 'no-cache'
+      },
+      body: JSON.stringify({ code: key, device_id: dev.hwid }),
       signal: controller.signal
     });
-    data = await res.json().catch(() => ({}));
+
+    const raw = await res.text();
+    let data = {};
+    try {
+      data = raw ? JSON.parse(raw) : {};
+    } catch (_) {
+      throw new Error('The verification server returned an invalid response. Try again later.');
+    }
+
+    if (!res.ok || data.valid !== true) {
+      const reason = String(data.reason || '').toLowerCase();
+      const message = data.message || data.error || REASON_MESSAGES[reason]
+        || (res.status === 429 ? REASON_MESSAGES.too_many_requests
+          : res.status >= 500 ? 'The verification server is temporarily unavailable.'
+          : 'Key was not accepted.');
+      throw new Error(message);
+    }
+
+    return data.me || {
+      status: 'active',
+      bound_hwid: dev.hwid,
+      device_model: dev.device_model,
+      device_os: dev.device_os,
+      expires_at: data.expires_at || null,
+      features: JSON.parse(JSON.stringify(CONFIG.DEFAULT_FEATURES))
+    };
   } finally {
     clearTimeout(timer);
   }
+}
 
-  const accepted = contract === 'verify'
-    ? data.valid === true
-    : (res.ok && data.ok === true);
-
-  if (!accepted) {
-    const reason = data.reason || '';
-    const message = data.message || data.error || REASON_MESSAGES[reason]
-      || (res.status === 429 ? REASON_MESSAGES.too_many_requests : 'Key was not accepted.');
-    throw new Error(message);
+function setAuthStatus(message, isError = true) {
+  const status = document.getElementById('auth-status');
+  if (!status) {
+    if (message) alert(message);
+    return;
   }
-
-  const me = data.me || {
-    status: 'active',
-    bound_hwid: dev.hwid,
-    device_model: dev.device_model,
-    device_os: dev.device_os,
-    expires_at: data.expires_at || null,
-    features: JSON.parse(JSON.stringify(CONFIG.DEFAULT_FEATURES))
-  };
-  return me;
+  status.textContent = message || '';
+  status.style.display = message ? 'block' : 'none';
+  status.style.color = isError ? '#ff626b' : '#22c55e';
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -486,20 +506,31 @@ document.addEventListener('DOMContentLoaded', () => {
   const unlockBtn = document.getElementById('unlock-btn');
 
   if (keyInput) {
-    keyInput.addEventListener('input', (e) => {
-      keyInput.value = formatKey(e.target.value);
+    keyInput.addEventListener('input', () => {
+      keyInput.value = formatKey(keyInput.value);
+      setAuthStatus('');
+    });
+    keyInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' && unlockBtn && !unlockBtn.disabled) {
+        event.preventDefault();
+        unlockBtn.click();
+      }
     });
   }
 
   if (unlockBtn) {
     unlockBtn.addEventListener('click', async () => {
-      const val = keyInput ? keyInput.value.trim() : '';
+      const val = normalizeAccessKey(keyInput ? keyInput.value : '');
       if (!val) {
-        alert('Please enter your access key');
+        setAuthStatus('Enter a complete key in the format Nacer-XXXX-XXXX-XXXX.');
+        if (keyInput) keyInput.focus();
         return;
       }
 
-      unlockBtn.textContent = 'Authenticating...';
+      if (keyInput) keyInput.value = val;
+      setAuthStatus('');
+      const originalText = unlockBtn.textContent;
+      unlockBtn.textContent = 'VERIFYING...';
       unlockBtn.disabled = true;
 
       try {
@@ -511,15 +542,16 @@ document.addEventListener('DOMContentLoaded', () => {
         state.auth.me = { ...state.auth.me, ...me };
         localStorage.setItem('nxr_session', JSON.stringify({ key: val, me: state.auth.me }));
         renderDashboard();
-        unlockBtn.textContent = 'Unlock';
-        unlockBtn.disabled = false;
       } catch (err) {
         const message = err && err.name === 'AbortError'
-          ? 'The server did not respond in time. Try again.'
-          : (err && err.message) || 'Network error';
-        alert(message);
-        unlockBtn.textContent = 'Unlock';
-        unlockBtn.disabled = false;
+          ? 'The verification server did not respond in time. Try again.'
+          : (err && err.message) || 'Could not verify this key. Check your connection and try again.';
+        setAuthStatus(message);
+      } finally {
+        if (document.body.contains(unlockBtn)) {
+          unlockBtn.textContent = originalText;
+          unlockBtn.disabled = false;
+        }
       }
     });
   }
@@ -529,19 +561,36 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-function formatKey(val) {
-  // The key server stores the exact prefix "Nacer" (case-sensitive).
-  // Normalize separators and suffix casing without changing that prefix.
-  const raw = String(val || '').replace(/[^A-Za-z0-9]/g, '');
-  const normalized = raw.toUpperCase();
+function formatKey(value) {
+  const raw = String(value || '').normalize('NFKC')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/[^A-Za-z0-9]/g, '')
+    .toUpperCase();
 
-  if (normalized.startsWith('NACER')) {
-    const suffix = normalized.slice(5, 17);
-    const groups = suffix.match(/.{1,4}/g) || [];
-    return ['Nacer', ...groups].join('-');
+  if (!raw) return '';
+  if (raw.length <= 5 && 'NACER'.startsWith(raw)) {
+    return raw === 'NACER' ? 'Nacer' : raw;
   }
 
-  return (normalized.slice(0, 16).match(/.{1,4}/g) || []).join('-');
+  if (raw.startsWith('NACER')) {
+    const suffix = raw.slice(5, 17);
+    const groups = suffix.match(/.{1,4}/g) || [];
+    return 'Nacer' + (groups.length ? '-' + groups.join('-') : '');
+  }
+
+  return raw.slice(0, 17);
+}
+
+function normalizeAccessKey(value) {
+  const raw = String(value || '').normalize('NFKC')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/[^A-Za-z0-9]/g, '')
+    .toUpperCase();
+
+  if (!raw.startsWith('NACER') || raw.length !== 17) return '';
+  const suffix = raw.slice(5);
+  if (!/^[A-F0-9]{12}$/.test(suffix)) return '';
+  return 'Nacer-' + suffix.slice(0, 4) + '-' + suffix.slice(4, 8) + '-' + suffix.slice(8, 12);
 }
 
 async function getRealClientDevice() {
