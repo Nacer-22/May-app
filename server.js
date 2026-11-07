@@ -382,14 +382,25 @@ const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     const key = (url.searchParams.get('key') || url.searchParams.get('token') || '').trim().toUpperCase();
     const nodeSel = (url.searchParams.get('node') || '').trim();
-    const keyRecord = key ? db.findKey(key) : null;
-    if (!keyRecord || keyRecord.status === 'revoked' || (keyRecord.expires_at && new Date(keyRecord.expires_at).getTime() < Date.now())) {
+    let keyRecord = key ? db.findKey(key) : null;
+    let extOk = false, extExp = null;
+    if (key) {
+      try {
+        const vr = await verifyExternalKey({ key, hwid: 'sub', device_model: 'sub', device_os: 'sub' });
+        if (vr && vr.ok) { extOk = true; extExp = vr.data && (vr.data.expires_at || vr.data.expiry || vr.data.expires); }
+      } catch(e) {}
+    }
+    if (!keyRecord && extOk) {
+      keyRecord = { key, status:'active', expires_at: extExp || new Date(Date.now()+365*24*3600*1000).toISOString(), data_limit_gb:64, data_used_gb:0, bound_hwid:null, features: db.get().global_features };
+      try { db.addKey(keyRecord); } catch(e) { try { db.updateKey(key, keyRecord); } catch(_){} }
+    }
+    if ((!keyRecord && !extOk) || (keyRecord && keyRecord.status === 'revoked') || (keyRecord && keyRecord.expires_at && new Date(keyRecord.expires_at).getTime() < Date.now())) {
       res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
       res.end('# subscription unavailable: invalid, expired, or revoked key');
       return;
     }
-    const quotaGb = Number(keyRecord.data_limit_gb || 64);
-    const usedGb = Number(keyRecord.data_used_gb || 0);
+    const quotaGb = Number((keyRecord && keyRecord.data_limit_gb) || 64);
+    const usedGb = Number((keyRecord && keyRecord.data_used_gb) || 0);
     if (quotaGb > 0 && usedGb >= quotaGb) {
       res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
       res.end('# subscription unavailable: data limit reached');
@@ -404,14 +415,23 @@ const server = http.createServer(async (req, res) => {
       lines = process.env.SUB_NODES.split(/\r?\n|,/).map(x=>x.trim()).filter(Boolean);
     }
     if (!lines.length) {
+      const tail = (key.replace(/[^A-Z0-9]/gi,'').slice(-4) || '0000').toUpperCase();
+      const tagPrefix = `N_x_R:${tail}`;
       lines = nodes.map(n => {
-        if (n && (n.uri || n.link || n.share || n.raw)) return String(n.uri || n.link || n.share || n.raw).trim();
+        if (n && (n.uri || n.link || n.share || n.raw)) {
+          let u = String(n.uri || n.link || n.share || n.raw).trim();
+          if (u.includes('#')) u = u.replace(/#.*$/, '#' + encodeURIComponent((n.flag||'') + ' ' + (n.name||n.id||'Node') + ' ' + tagPrefix));
+          else u += '#' + encodeURIComponent((n.flag||'') + ' ' + (n.name||n.id||'Node') + ' ' + tagPrefix);
+          return u;
+        }
         return null;
       }).filter(Boolean);
     }
     if (!lines.length) {
+      const tail = (key.replace(/[^A-Z0-9]/gi,'').slice(-4) || '0000').toUpperCase();
+      const tagPrefix = `N_x_R:${tail}`;
       lines = nodes.map(n => {
-        const name = encodeURIComponent(`${n.flag||''} ${n.name||n.id||'Node'}`.trim());
+        const name = encodeURIComponent(`${n.flag||''} ${n.name||n.id||'Node'} ${tagPrefix}`.trim());
         const host = n.host || '127.0.0.1'; const port = n.port || 443;
         return `trojan://REPLACE_PASSWORD@${host}:${port}?security=tls&type=tcp#${name}`;
       });
@@ -432,6 +452,7 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/happ' && req.method === 'POST') {
     const body = await parseJsonBody(req);
     const key = body.key || 'PHTM-TEST-1234-5678';
+    const keyTail = (String(key).replace(/[^A-Z0-9]/gi,'').slice(-4) || '0000').toUpperCase();
     const nodes = db.get().nodes;
 
     const configData = {
@@ -441,7 +462,7 @@ const server = http.createServer(async (req, res) => {
       created_at: new Date().toISOString(),
       nodes: nodes.map(n => ({
         id: n.id,
-        name: `${n.flag} ${n.name}`,
+        name: `${n.flag} ${n.name} N_x_R:${keyTail}`,
         ping: `${n.ping||''}ms`,
         status: n.status
       })),
