@@ -508,8 +508,9 @@ const server = http.createServer(async (req, res) => {
     const proto = (req.headers['x-forwarded-proto'] || 'https').split(',')[0];
     const host = req.headers['x-forwarded-host'] || req.headers.host || 'may-app.onrender.com';
     const hwid = (body.hwid || body.device_id || 'app').toString();
+    const nodeSel = (body.node || body.server || '').toString();
     const subToken = makeSubToken(key, hwid, 7*24*3600);
-    const subUrl = `${proto}://${host}/api/subscription?token=${encodeURIComponent(subToken)}`;
+    const subUrl = `${proto}://${host}/api/subscription?token=${encodeURIComponent(subToken)}${nodeSel ? `&node=${encodeURIComponent(nodeSel)}` : ''}`;
     const subUrlEnc = encodeURIComponent(subUrl);
     const displayName = `N_x_R:${keyTail}`;
     return sendJson(res, 200, {

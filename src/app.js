@@ -6,6 +6,8 @@ import { Icons } from './icons.js';
 const state = {
   lang: localStorage.getItem('powerup_lang') || 'en',
   tab: 'status',
+  selectedNode: localStorage.getItem('nacerxrida_node') || '',
+  nodes: [],
   isConnected: localStorage.getItem('nacerxrida_vpn_connected') === 'true',
   auth: {
     loggedIn: false,
@@ -45,6 +47,14 @@ function formatCountdown(targetIso) {
   if (days > 0) return `${days}D ${hours}H`;
   if (hours > 0) return `${hours}H ${mins}M`;
   return `${mins}M`;
+}
+
+async function loadNodes(){
+  try{
+    const res = await fetch(API_BASE + '/api/nodes');
+    const data = await res.json().catch(()=>({}));
+    if(data && data.nodes){ state.nodes = data.nodes; }
+  }catch(e){}
 }
 
 function renderDashboard() {
@@ -114,6 +124,14 @@ function renderStatusTab(me) {
           <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 1px; color: #ffffff;">${state.auth.key || 'NXRD-XXXX-XXXX-XXXX'}</span>
         </div>
         <button id="copy-key-btn" style="background: #18181c; border: none; border-radius: 8px; color: #ffffff; padding: 8px 12px; font-size: 10px; font-weight: 700; cursor: pointer;">COPY</button>
+      </div>
+
+      <!-- اختيار السيرفر (يتغير من الموقع) -->
+      <div style="width:100%; background:#0c0c0e; border:1px solid #1a1a1e; border-radius:14px; padding:12px; text-align:left;">
+        <div style="font-size:10px; color:#71717a; letter-spacing:1px; margin-bottom:8px;">SERVER / السيرفر</div>
+        <div id="node-list" style="display:flex; gap:8px; flex-wrap:wrap;">
+          ${(state.nodes && state.nodes.length ? state.nodes : [{id:'sg1',flag:'🇸🇬',name:'Singapore',status:'online'},{id:'del1',flag:'🇮🇳',name:'India',status:'online'},{id:'fr1',flag:'🇫🇷',name:'Europe',status:'online'}]).map(n=>`<button type="button" data-select-node="${n.id}" style="border:1px solid #2a0b0b; background:${state.selectedNode===n.id?'#ff1f1f':'#140404'}; color:${state.selectedNode===n.id?'#fff':'#ffdede'}; border-radius:10px; padding:8px 10px; font-size:11px; cursor:pointer;">${n.flag||''} ${n.name||n.id}</button>`).join('')}
+        </div>
       </div>
 
       <!-- زر أضف اشتراك (Add Subscription) -->
@@ -309,7 +327,7 @@ function attachDashboardEvents() {
         const res = await fetch(API_BASE + '/api/happ', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key: state.auth && state.auth.key ? state.auth.key : 'NXRD-TEST-0000-0000', hwid: dev.hwid })
+          body: JSON.stringify({ key: state.auth && state.auth.key ? state.auth.key : 'NXRD-TEST-0000-0000', hwid: dev.hwid, node: state.selectedNode || '' })
         });
         const data = await res.json().catch(()=>({}));
         if (!res.ok && data && data.error) { alert(data.error); return; }
@@ -328,6 +346,13 @@ function attachDashboardEvents() {
       }
     });
   }
+  document.querySelectorAll('[data-select-node]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.selectedNode = btn.getAttribute('data-select-node') || '';
+      localStorage.setItem('nacerxrida_node', state.selectedNode);
+      loadNodes().then(()=>renderDashboard()).catch(()=>renderDashboard());
+    });
+  });
   const infoBtn = document.getElementById('connection-info-btn');
   if (infoBtn) infoBtn.addEventListener('click', () => window.open(API_BASE || 'https://may-app.onrender.com', '_blank'));
 
@@ -459,7 +484,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (state.auth.loggedIn) {
-    renderDashboard();
+    loadNodes().then(()=>renderDashboard()).catch(()=>renderDashboard());
   }
 });
 
