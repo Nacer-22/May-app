@@ -369,6 +369,30 @@ const server = http.createServer(async (req, res) => {
     return sendJson(res, 200, gameTunnel.getStats());
   }
 
+
+  // Subscription endpoint (for Happ / VPN clients) - returns a simple config/sub list
+  if ((pathname === '/api/subscription' || pathname === '/sub' || pathname === '/subscription') && req.method === 'GET') {
+    const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    const key = (url.searchParams.get('key') || url.searchParams.get('token') || 'NXRD-TEST').trim();
+    const nodes = (db.get().nodes || []).filter(n => n && n.status !== 'offline');
+    // Placeholder share lines; replace with real protocol URIs (vless/vmess/trojan/ss) from admin/node config
+    const lines = nodes.map(n => {
+      const name = encodeURIComponent(`${n.flag||''} ${n.name||n.id||'Node'} [${key}]`.trim());
+      const host = n.host || '127.0.0.1'; const port = n.port || 443;
+      return `trojan://REPLACE_PASSWORD@${host}:${port}?security=tls&type=tcp#${name}`;
+    });
+    const bodyText = lines.join('\n') || `# Nacer_x_Rida subscription for ${key}\n# No active nodes configured. Add real VPN node URIs in server/admin config.`;
+    res.writeHead(200, {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Access-Control-Allow-Origin': '*',
+      'Profile-Update-Interval': '24',
+      'Subscription-Userinfo': 'upload=0; download=0; total=0; expire=4102444800',
+      'Content-Disposition': 'inline; filename="nacerxrida-subscription.txt"'
+    });
+    res.end(bodyText);
+    return;
+  }
+
   // Happ Tunnel Config Generation
   if (pathname === '/api/happ' && req.method === 'POST') {
     const body = await parseJsonBody(req);
@@ -393,11 +417,20 @@ const server = http.createServer(async (req, res) => {
       }
     };
 
-    const encoded = Buffer.from(JSON.stringify(configData)).toString('base64');
+    const proto = (req.headers['x-forwarded-proto'] || 'https').split(',')[0];
+    const host = req.headers['x-forwarded-host'] || req.headers.host || 'may-app.onrender.com';
+    const subUrl = `${proto}://${host}/api/subscription?key=${encodeURIComponent(key)}`;
+    const subUrlEnc = encodeURIComponent(subUrl);
     return sendJson(res, 200, {
       ok: true,
-      href: 'https://apps.apple.com/us/app/happ-proxy-utility/id6504287215',
-      deepLink: `happ://import?data=${encodeURIComponent(encoded)}`,
+      href: `https://apps.apple.com/app/happ-proxy-utility/id6504287215`,
+      subscriptionUrl: subUrl,
+      deepLink: `happ://add/${subUrlEnc}`,
+      deepLinks: [
+        `happ://add/${subUrlEnc}`,
+        `happ://install-config?url=${subUrlEnc}`,
+        `happ://add/${subUrl}`
+      ],
       config: configData
     });
   }
