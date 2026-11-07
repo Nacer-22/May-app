@@ -334,15 +334,11 @@ function attachDashboardEvents() {
         state.isConnected = true;
         localStorage.setItem('nacerxrida_vpn_connected', 'true');
         renderDashboard();
-        // open site as requested, then import to Happ
-        try { window.open(data.siteUrl || API_BASE || 'https://may-app.onrender.com', '_blank'); } catch(_){}
-        const link = (data && (data.deepLink || data.href)) || 'happ://';
-        setTimeout(()=>{ window.location.href = link; }, 350);
+        const link = (data && (data.deepLink || (data.deepLinks && data.deepLinks[0]))) || 'happ://add/' + encodeURIComponent(data.subscriptionUrl || '');
+        if (link) window.location.href = link;
+        else alert('تعذر إنشاء رابط الاشتراك');
       } catch (e) {
-        state.isConnected = true;
-        localStorage.setItem('nacerxrida_vpn_connected', 'true');
-        renderDashboard();
-        window.location.href = 'happ://';
+        alert('تعذر الاتصال بالخادم (تأكد أن may-app يعمل): ' + (e && e.message ? e.message : e));
       }
     });
   }
