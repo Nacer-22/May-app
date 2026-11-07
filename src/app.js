@@ -1,4 +1,5 @@
 import { CONFIG } from './config.js';
+const API_BASE = (typeof window!=='undefined'&&window.API_BASE) || (CONFIG&&CONFIG.API_BASE) || 'https://may-app.onrender.com';
 import { TRANSLATIONS } from './translations.js';
 import { Icons } from './icons.js';
 
@@ -301,11 +302,25 @@ function attachDashboardEvents() {
 
   const happBtn = document.getElementById('happ-btn');
   if (happBtn) {
-    happBtn.addEventListener('click', () => {
-      state.isConnected = true;
-      localStorage.setItem('nacerxrida_vpn_connected', 'true');
-      window.location.href = 'happ://';
-      renderDashboard();
+    happBtn.addEventListener('click', async () => {
+      try {
+        const res = await fetch(API_BASE + '/api/happ', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: state.auth && state.auth.key ? state.auth.key : 'NXRD-TEST-0000-0000' })
+        });
+        const data = await res.json().catch(()=>({}));
+        state.isConnected = true;
+        localStorage.setItem('nacerxrida_vpn_connected', 'true');
+        renderDashboard();
+        const link = (data && (data.deepLink || data.href)) || 'happ://';
+        window.location.href = link;
+      } catch (e) {
+        state.isConnected = true;
+        localStorage.setItem('nacerxrida_vpn_connected', 'true');
+        renderDashboard();
+        window.location.href = 'happ://';
+      }
     });
   }
 
@@ -350,7 +365,7 @@ function attachDashboardEvents() {
 async function saveFeatures(f) {
   localStorage.setItem('nacerxrida_session', JSON.stringify({ key: state.auth.key, me: state.auth.me, features: f }));
   try {
-    await fetch('/api/features', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ features: f, key: state.auth.key }) });
+    await fetch(API_BASE + '/api/features', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ features: f, key: state.auth.key }) });
   } catch (e) {}
 }
 
@@ -399,7 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
           ok = !!(data && data.valid === true);
         } catch (e) {
           // fallback to same-origin Node server if available
-          res = await fetch('/api/redeem', {
+          res = await fetch(API_BASE + '/api/redeem', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ key: val, hwid: dev.hwid, device_model: dev.device_model, device_os: dev.device_os })

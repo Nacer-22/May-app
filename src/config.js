@@ -1,4 +1,5 @@
 export const CONFIG = {
+  "API_BASE": "https://may-app.onrender.com",
   "BRAND_WORDMARK": "Nacer_x_Rida",
   "BRAND_TAGLINE": "key login, tunnel status, live match features.",
   "KEY_PREFIX": "NACER",
