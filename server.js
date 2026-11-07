@@ -430,11 +430,19 @@ const server = http.createServer(async (req, res) => {
       try { db.addKey(keyRecord); } catch(e) { try { db.updateKey(key, keyRecord); } catch(_){} }
     }
     const expired = keyRecord && keyRecord.expires_at && new Date(keyRecord.expires_at).getTime() < Date.now();
-    if ((!keyRecord && !extOk) || (keyRecord && keyRecord.status === 'revoked') || expired) {
+    // Resilient: trust signed token; allow existing active local key if external check is temporarily inconclusive
+    const tokenTrusted = !!(tok && tok.key);
+    const localActive = keyRecord && keyRecord.status === 'active' && !expired;
+    const allowSub = tokenTrusted || extOk || (localActive && extReason === 'external_inconclusive');
+    if (!allowSub || (keyRecord && keyRecord.status === 'revoked') || expired) {
       const reason = expired ? 'expired' : (keyRecord && keyRecord.status==='revoked' ? 'revoked' : extReason || 'invalid');
       res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
       res.end('# subscription unavailable: ' + reason);
       return;
+    }
+    if (!keyRecord && allowSub) {
+      keyRecord = { key, status:'active', expires_at: new Date(Date.now()+365*24*3600*1000).toISOString(), data_limit_gb:64, data_used_gb:0, bound_hwid:hwid, features: db.get().global_features };
+      try { db.addKey(keyRecord); } catch(e) { try { db.updateKey(key, keyRecord); } catch(_){} }
     }
     // One connection per key: bind to first hwid
     if (keyRecord) {
@@ -545,10 +553,10 @@ const server = http.createServer(async (req, res) => {
       siteUrl: `${proto}://${host}/`,
       href: `${proto}://${host}/`,
       subscriptionUrl: subUrlSimple,
-      deepLink: `happ://add/${subUrlSimple}`,
+      deepLink: `happ://add/${subUrlEnc}`,
       deepLinks: [
-        `happ://add/${subUrlSimple}`,
         `happ://add/${subUrlEnc}`,
+        `happ://add/${subUrlSimple}`,
         `happ://install-config?url=${subUrlEnc}`,
         `happ://subscription/add?url=${subUrlEnc}`
       ],
