@@ -106,7 +106,7 @@ function renderStatusTab(me) {
       <!-- الدائرة الوسطى -->
       <div style="position: relative; width: 100%; height: 240px; display: flex; align-items: center; justify-content: center; border: 1px dashed #1a1a1e; border-radius: 20px; background: #0c0c0e; margin: 10px 0;">
         <div style="display: flex; flex-direction: column; align-items: center;">
-          <img src="logo.png" alt="Nacer_x_Rida" style="max-width: 70px; width: 100%; height: auto; object-fit: contain; margin-bottom: 12px; filter: drop-shadow(0 0 12px rgba(229, 9, 20, 0.4));" onerror="this.onerror=null; this.style.display='none';" />
+          <img src="logo.png" alt="Nacer_x_Rida" style="max-width: 86px; width: 100%; height: auto; object-fit: contain; margin-bottom: 12px; border-radius: 18px; filter: drop-shadow(0 0 10px rgba(255,30,30,0.55)) drop-shadow(0 0 22px rgba(255,0,0,0.25)); -webkit-mask-image: radial-gradient(circle, black 62%, rgba(0,0,0,0.2) 78%, transparent 100%); mask-image: radial-gradient(circle, black 62%, rgba(0,0,0,0.2) 78%, transparent 100%);" onerror="this.onerror=null; this.style.display='none';" />
           <div style="font-family: 'Anton', sans-serif; font-size: 40px; letter-spacing: 2px; color: #ffffff;">${expiresText}</div>
           <div style="font-size: 9px; color: #71717a; letter-spacing: 3px; margin-top: 4px;">TIME LEFT</div>
         </div>
@@ -123,7 +123,7 @@ function renderStatusTab(me) {
           </div>
           <div style="background: #b91c1c; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 8px; font-size: 18px; font-weight: bold; color: #fff;">+</div>
         </button>
-        <button id="connection-info-btn" style="width:100%; background:#120606; border:1px solid #2a0b0b; color:#ffb3b3; border-radius:12px; padding:12px; font-size:11px; font-weight:700; cursor:pointer;">معلومات الاتصال / OPEN SITE</button>
+
       </div>
     </div>
   `;
@@ -300,8 +300,7 @@ function attachDashboardEvents() {
     });
   }
 
-  const infoBtn = document.getElementById('connection-info-btn');
-  if (infoBtn) infoBtn.addEventListener('click', () => window.open(API_BASE || 'https://may-app.onrender.com', '_blank'));
+
 
   document.querySelectorAll('[data-nav-tab]').forEach(btn => {
     btn.addEventListener('click', () => {
