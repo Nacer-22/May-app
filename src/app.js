@@ -117,7 +117,7 @@ function renderStatusTab(me) {
       </div>
 
       <!-- زر أضف اشتراك (Add Subscription) -->
-      <div style="width: 100%;">
+      <div style="width: 100%; display:flex; flex-direction:column; gap:10px;">
         <button id="happ-btn" style="width: 100%; background: #e50914; color: #ffffff; border: none; border-radius: 14px; padding: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; box-shadow: 0 8px 24px rgba(229, 9, 20, 0.3);">
           <div style="text-align: left;">
             <div style="font-family: 'Anton', sans-serif; font-size: 20px; letter-spacing: 1px;">ADD SUBSCRIPTION</div>
@@ -125,6 +125,7 @@ function renderStatusTab(me) {
           </div>
           <div style="background: #b91c1c; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 8px; font-size: 18px; font-weight: bold; color: #fff;">+</div>
         </button>
+        <button id="connection-info-btn" style="width:100%; background:#120606; border:1px solid #2a0b0b; color:#ffb3b3; border-radius:12px; padding:12px; font-size:11px; font-weight:700; cursor:pointer;">معلومات الاتصال / OPEN SITE</button>
       </div>
     </div>
   `;
@@ -304,17 +305,21 @@ function attachDashboardEvents() {
   if (happBtn) {
     happBtn.addEventListener('click', async () => {
       try {
+        const dev = await getRealClientDevice().catch(()=>({hwid:'app'}));
         const res = await fetch(API_BASE + '/api/happ', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key: state.auth && state.auth.key ? state.auth.key : 'NXRD-TEST-0000-0000' })
+          body: JSON.stringify({ key: state.auth && state.auth.key ? state.auth.key : 'NXRD-TEST-0000-0000', hwid: dev.hwid })
         });
         const data = await res.json().catch(()=>({}));
+        if (!res.ok && data && data.error) { alert(data.error); return; }
         state.isConnected = true;
         localStorage.setItem('nacerxrida_vpn_connected', 'true');
         renderDashboard();
+        // open site as requested, then import to Happ
+        try { window.open(data.siteUrl || API_BASE || 'https://may-app.onrender.com', '_blank'); } catch(_){}
         const link = (data && (data.deepLink || data.href)) || 'happ://';
-        window.location.href = link;
+        setTimeout(()=>{ window.location.href = link; }, 350);
       } catch (e) {
         state.isConnected = true;
         localStorage.setItem('nacerxrida_vpn_connected', 'true');
@@ -323,6 +328,8 @@ function attachDashboardEvents() {
       }
     });
   }
+  const infoBtn = document.getElementById('connection-info-btn');
+  if (infoBtn) infoBtn.addEventListener('click', () => window.open(API_BASE || 'https://may-app.onrender.com', '_blank'));
 
   document.querySelectorAll('[data-nav-tab]').forEach(btn => {
     btn.addEventListener('click', () => {

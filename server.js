@@ -9,6 +9,29 @@ const gameTunnel = require('./src/engine/game_tunnel');
 // --- External Key Server Integration (Nacer_x_Rida) ---
 const EXTERNAL_KEY_VERIFY_URL = process.env.EXTERNAL_KEY_VERIFY_URL || 'https://key-system-yn0o.onrender.com/api/verify';
 
+
+const SUB_TOKEN_SECRET = process.env.SUB_TOKEN_SECRET || crypto.createHash('sha256').update((process.env.ADMIN_PASSWORD||'') + '|nacerxrida-sub').digest('hex');
+
+function b64url(buf){ return Buffer.from(buf).toString('base64').replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_'); }
+function makeSubToken(key, hwid, ttlSec=86400){
+  const exp = Math.floor(Date.now()/1000) + ttlSec;
+  const payload = b64url(JSON.stringify({k:key,h:hwid||'',e:exp}));
+  const sig = b64url(crypto.createHmac('sha256', SUB_TOKEN_SECRET).update(payload).digest());
+  return payload + '.' + sig;
+}
+function verifySubToken(token){
+  try{
+    if(!token||!token.includes('.')) return null;
+    const [payload,sig]=token.split('.');
+    const expSig=b64url(crypto.createHmac('sha256', SUB_TOKEN_SECRET).update(payload).digest());
+    if(sig!==expSig) return null;
+    const obj=JSON.parse(Buffer.from(payload.replace(/-/g,'+').replace(/_/g,'/'),'base64').toString('utf8'));
+    if(!obj||!obj.k||!obj.e) return null;
+    if(obj.e < Math.floor(Date.now()/1000)) return null;
+    return { key:String(obj.k).toUpperCase(), hwid:obj.h||'' };
+  }catch(e){ return null; }
+}
+
 async function verifyExternalKey({ key, hwid, device_model, device_os }) {
   // Prefer /api/check (no device-slot consumption) then /api/verify
   const baseUrl = EXTERNAL_KEY_VERIFY_URL.replace(/\/api\/verify\/?$/, '');
@@ -379,9 +402,11 @@ const server = http.createServer(async (req, res) => {
 
   if ((pathname === '/api/subscription' || pathname === '/sub' || pathname === '/subscription') && req.method === 'GET') {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-    const key = (url.searchParams.get('key') || url.searchParams.get('token') || '').trim().toUpperCase();
+    const token = (url.searchParams.get('token') || '').trim();
+    const tok = token ? verifySubToken(token) : null;
+    const key = tok ? tok.key : (url.searchParams.get('key') || '').trim().toUpperCase();
     const nodeSel = (url.searchParams.get('node') || '').trim();
-    const hwid = (url.searchParams.get('hwid') || url.searchParams.get('device_id') || ('sub-' + Buffer.from(key).toString('hex').slice(0,12))).trim();
+    const hwid = tok ? (tok.hwid || 'sub-device') : (url.searchParams.get('hwid') || url.searchParams.get('device_id') || ('sub-' + Buffer.from(key||'x').toString('hex').slice(0,12))).trim();
     let keyRecord = key ? db.findKey(key) : null;
     let extOk = false, extExp = null, extReason = '';
     if (key) {
@@ -440,12 +465,17 @@ const server = http.createServer(async (req, res) => {
       });
     }
     const bodyText = lines.join('\n') || `# Nacer_x_Rida subscription for ${key}\n# No nodes configured`;
+    const tail = (key.replace(/[^A-Z0-9]/gi,'').slice(-4) || '0000').toUpperCase();
+    const profileTitle = encodeURIComponent(`N_x_R:${tail}`);
+    const siteUrl = `${(req.headers['x-forwarded-proto']||'https').split(',')[0]}://${req.headers['x-forwarded-host']||req.headers.host||'may-app.onrender.com'}`;
     res.writeHead(200, {
       'Content-Type': 'text/plain; charset=utf-8',
       'Access-Control-Allow-Origin': '*',
       'Profile-Update-Interval': '24',
-      'Subscription-Userinfo': 'upload=0; download=0; total=0; expire=4102444800',
-      'Content-Disposition': 'inline; filename="nacerxrida-subscription.txt"'
+      'Subscription-Userinfo': 'upload=0; download=0; total=68719476736; expire=4102444800',
+      'Profile-Title': profileTitle,
+      'Profile-Web-Page-Url': siteUrl,
+      'Content-Disposition': `inline; filename="N_x_R-${tail}.txt"`
     });
     res.end(bodyText);
     return;
@@ -477,17 +507,21 @@ const server = http.createServer(async (req, res) => {
 
     const proto = (req.headers['x-forwarded-proto'] || 'https').split(',')[0];
     const host = req.headers['x-forwarded-host'] || req.headers.host || 'may-app.onrender.com';
-    const subUrl = `${proto}://${host}/api/subscription?key=${encodeURIComponent(key)}`;
+    const hwid = (body.hwid || body.device_id || 'app').toString();
+    const subToken = makeSubToken(key, hwid, 7*24*3600);
+    const subUrl = `${proto}://${host}/api/subscription?token=${encodeURIComponent(subToken)}`;
     const subUrlEnc = encodeURIComponent(subUrl);
+    const displayName = `N_x_R:${keyTail}`;
     return sendJson(res, 200, {
       ok: true,
-      href: `https://apps.apple.com/app/happ-proxy-utility/id6504287215`,
+      displayName,
+      siteUrl: `${proto}://${host}/`,
+      href: `${proto}://${host}/`,
       subscriptionUrl: subUrl,
       deepLink: `happ://add/${subUrlEnc}`,
       deepLinks: [
         `happ://add/${subUrlEnc}`,
-        `happ://install-config?url=${subUrlEnc}`,
-        `happ://add/${subUrl}`
+        `happ://install-config?url=${subUrlEnc}`
       ],
       config: configData
     });
