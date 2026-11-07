@@ -488,7 +488,7 @@ const server = http.createServer(async (req, res) => {
       lines = nodes.map(n => {
         const name = encodeURIComponent(`${n.flag||''} ${n.name||n.id||'Node'} ${tagPrefix}`.trim());
         const host = n.host || '127.0.0.1'; const port = n.port || 443;
-        return `trojan://REPLACE_PASSWORD@${host}:${port}?security=tls&type=tcp#${name}`;
+        return `trojan://00000000-0000-0000-0000-000000000000@${host}:${port}?security=tls&type=tcp#${name}`;
       });
     }
     const bodyText = lines.join('\n') || `# Nacer_x_Rida subscription for ${key}\n# No nodes configured`;
