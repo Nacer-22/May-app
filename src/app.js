@@ -74,9 +74,8 @@ function renderDashboard() {
       
       <!-- الشريط العلوي للحالة -->
       <div style="width: 100%; max-width: 400px; display: flex; justify-content: space-between; align-items: center; padding: 10px 4px;">
-        <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 800; letter-spacing: 2px; color: ${statusColor};">
-          <span style="height: 8px; width: 8px; background-color: ${statusColor}; box-shadow: 0 0 8px ${statusColor};"></span>
-          ${statusText}
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="height: 8px; width: 8px; background-color: ${statusColor}; box-shadow: 0 0 8px ${statusColor}; border-radius:50%;"></span>
         </div>
         
         <button id="lang-toggle-icon" style="background: #0c0c0e; border: 1px solid #1a1a1e; border-radius: 4px; padding: 6px 12px; color: #cccccc; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 11px; font-weight: 700;">
@@ -103,10 +102,6 @@ function renderStatusTab(me) {
 
   return `
     <div style="width: 100%; display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center;">
-      <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #71717a; padding: 0 4px; letter-spacing: 1px;">
-        <span>HOME</span>
-        <span>LAST REFRESHED JUST NOW</span>
-      </div>
 
       <!-- الدائرة الوسطى -->
       <div style="position: relative; width: 100%; height: 240px; display: flex; align-items: center; justify-content: center; border: 1px dashed #1a1a1e; border-radius: 20px; background: #0c0c0e; margin: 10px 0;">
@@ -117,22 +112,7 @@ function renderStatusTab(me) {
         </div>
       </div>
 
-      <!-- خانة المفتاح -->
-      <div style="width: 100%; background: #0c0c0e; border: 1px solid #1a1a1e; border-radius: 14px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <span style="font-size: 10px; color: #71717a;">KEY</span>
-          <span style="font-size: 12.5px; font-weight: 700; letter-spacing: 1px; color: #ffffff;">${state.auth.key || 'NXRD-XXXX-XXXX-XXXX'}</span>
-        </div>
-        <button id="copy-key-btn" style="background: #18181c; border: none; border-radius: 8px; color: #ffffff; padding: 8px 12px; font-size: 10px; font-weight: 700; cursor: pointer;">COPY</button>
-      </div>
 
-      <!-- اختيار السيرفر (يتغير من الموقع) -->
-      <div style="width:100%; background:#0c0c0e; border:1px solid #1a1a1e; border-radius:14px; padding:12px; text-align:left;">
-        <div style="font-size:10px; color:#71717a; letter-spacing:1px; margin-bottom:8px;">SERVER / السيرفر</div>
-        <div id="node-list" style="display:flex; gap:8px; flex-wrap:wrap;">
-          ${(state.nodes && state.nodes.length ? state.nodes : [{id:'sg1',flag:'🇸🇬',name:'Singapore',status:'online'},{id:'del1',flag:'🇮🇳',name:'India',status:'online'},{id:'fr1',flag:'🇫🇷',name:'Europe',status:'online'}]).map(n=>`<button type="button" data-select-node="${n.id}" style="border:1px solid #2a0b0b; background:${state.selectedNode===n.id?'#ff1f1f':'#140404'}; color:${state.selectedNode===n.id?'#fff':'#ffdede'}; border-radius:10px; padding:8px 10px; font-size:11px; cursor:pointer;">${n.flag||''} ${n.name||n.id}</button>`).join('')}
-        </div>
-      </div>
 
       <!-- زر أضف اشتراك (Add Subscription) -->
       <div style="width: 100%; display:flex; flex-direction:column; gap:10px;">
@@ -163,14 +143,10 @@ function renderFeaturesTab(me) {
   const aimpoint = f.aimpoint || { enabled: false };
   const aimLag = f.aimLag || { enabled: false };
 
-  // إزالة PHANTOM من القائمة
-  const markerTypes = ['Nacer_x_Rida', 'DREAM', 'ICE WALL', 'MOCO', 'CLU', 'SHIROU', 'IRIS'];
-
   return `
     <div style="width: 100%; display: flex; flex-direction: column; gap: 12px; text-align: left; max-height: 70vh; overflow-y: auto;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
         <span style="font-family: 'Anton', sans-serif; font-size: 32px; letter-spacing: 1px; color: #ffffff;">FEATURES</span>
-        <span style="font-family: 'Anton', sans-serif; font-size: 20px; color: #e50914;">3/3</span>
       </div>
       <p style="font-size: 11.5px; color: #71717a; margin-bottom: 10px;">changes apply from your next match</p>
 
@@ -180,22 +156,12 @@ function renderFeaturesTab(me) {
           <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 12px; color: #71717a; font-weight: bold;">01</span>
             <span style="font-family: 'Anton', sans-serif; font-size: 22px; letter-spacing: 1px; color: #ffffff;">MARKER</span>
-            <span style="background: rgba(229,9,20,0.2); color: #e50914; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px;">RISK</span>
           </div>
           <button type="button" data-toggle="marker" style="width: 44px; height: 24px; border-radius: 12px; background: ${marker.enabled ? '#e50914' : '#1a1a1e'}; border: none; position: relative; cursor: pointer;">
             <span style="width: 18px; height: 18px; border-radius: 50%; background: #ffffff; position: absolute; top: 3px; ${marker.enabled ? 'right: 3px;' : 'left: 3px;'}"></span>
           </button>
         </div>
-        <p style="font-size: 11px; color: #71717a; margin-bottom: 12px;">marks every enemy on your screen.</p>
-        
-        <div style="font-size: 10px; color: #52525b; letter-spacing: 1px; margin-bottom: 8px; font-weight: bold;">MARK STYLE</div>
-        
-        <!-- شبكة الأشكال مع التأثير الشفاف عند الإيقاف -->
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; position: relative; transition: all 0.3s ease; ${!marker.enabled ? 'opacity: 0.35; pointer-events: none; filter: grayscale(1);' : ''}">
-          ${markerTypes.map(type => `
-            <button data-marker-type="${type}" style="border: 1px solid #1a1a1e; border-radius: 8px; padding: 8px 4px; font-size: 10px; font-weight: bold; cursor: pointer; background: ${marker.type === type ? '#e50914' : '#141418'}; color: ${marker.type === type ? '#ffffff' : '#71717a'}; transition: all 0.2s;">${type}</button>
-          `).join('')}
-        </div>
+        <p style="font-size: 11px; color: #71717a;">marks every enemy on your screen.</p>
       </div>
 
       <!-- ميزة Aimpoint -->
@@ -204,7 +170,6 @@ function renderFeaturesTab(me) {
           <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 12px; color: #71717a; font-weight: bold;">02</span>
             <span style="font-family: 'Anton', sans-serif; font-size: 22px; letter-spacing: 1px; color: #ffffff;">AIMPOINT</span>
-            <span style="background: #222226; color: #ffffff; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px;">NEW</span>
           </div>
           <button type="button" data-toggle="aimpoint" style="width: 44px; height: 24px; border-radius: 12px; background: ${aimpoint.enabled ? '#e50914' : '#1a1a1e'}; border: none; position: relative; cursor: pointer;">
             <span style="width: 18px; height: 18px; border-radius: 50%; background: #ffffff; position: absolute; top: 3px; ${aimpoint.enabled ? 'right: 3px;' : 'left: 3px;'}"></span>
@@ -311,14 +276,6 @@ function attachDashboardEvents() {
     });
   }
 
-  const copyBtn = document.getElementById('copy-key-btn');
-  if (copyBtn) {
-    copyBtn.addEventListener('click', () => {
-      navigator.clipboard.writeText(state.auth.key);
-      alert('KEY COPIED TO CLIPBOARD');
-    });
-  }
-
   const happBtn = document.getElementById('happ-btn');
   if (happBtn) {
     happBtn.addEventListener('click', async () => {
@@ -327,7 +284,7 @@ function attachDashboardEvents() {
         const res = await fetch(API_BASE + '/api/happ', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key: state.auth && state.auth.key ? state.auth.key : 'NXRD-TEST-0000-0000', hwid: dev.hwid, node: state.selectedNode || '' })
+          body: JSON.stringify({ key: state.auth && state.auth.key ? state.auth.key : 'NXRD-TEST-0000-0000', hwid: dev.hwid, node: 'fr1' })
         });
         const data = await res.json().catch(()=>({}));
         if (!res.ok && data && data.error) { alert(data.error); return; }
@@ -342,13 +299,7 @@ function attachDashboardEvents() {
       }
     });
   }
-  document.querySelectorAll('[data-select-node]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      state.selectedNode = btn.getAttribute('data-select-node') || '';
-      localStorage.setItem('nacerxrida_node', state.selectedNode);
-      loadNodes().then(()=>renderDashboard()).catch(()=>renderDashboard());
-    });
-  });
+
   const infoBtn = document.getElementById('connection-info-btn');
   if (infoBtn) infoBtn.addEventListener('click', () => window.open(API_BASE || 'https://may-app.onrender.com', '_blank'));
 
