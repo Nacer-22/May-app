@@ -556,22 +556,19 @@ const server = http.createServer(async (req, res) => {
     const hwid = (body.hwid || body.device_id || 'app').toString();
     const nodeSel = (body.node || body.server || '').toString();
     const subToken = makeSubToken(key, hwid, 7*24*3600);
-    const subUrlFull = `${proto}://${host}/api/subscription?token=${encodeURIComponent(subToken)}&key=${encodeURIComponent(key)}${nodeSel ? `&node=${encodeURIComponent(nodeSel)}` : ''}`;
-    // Simple key-only URL for Happ (avoids &/token parsing issues in deep links)
-    const subUrlSimple = `${proto}://${host}/api/subscription?key=${encodeURIComponent(key)}${nodeSel ? `&node=${encodeURIComponent(nodeSel)}` : ''}`;
-    const subUrlEnc = encodeURIComponent(subUrlSimple);
+    const subUrl = `${proto}://${host}/api/subscription?key=${encodeURIComponent(key)}${nodeSel ? `&node=${encodeURIComponent(nodeSel)}` : ''}`;
+    const subUrlEnc = encodeURIComponent(subUrl);
     const displayName = `N_x_R:${keyTail}`;
     return sendJson(res, 200, {
       ok: true,
       displayName,
       siteUrl: `${proto}://${host}/`,
       href: `${proto}://${host}/`,
-      subscriptionUrl: subUrlSimple,
-      deepLink: `happ://add/${subUrlSimple}`,
+      subscriptionUrl: subUrl,
+      deepLink: `happ://add/${subUrlEnc}`,
       deepLinks: [
-        `happ://add/${subUrlSimple}`,
         `happ://add/${subUrlEnc}`,
-        `happ://add/sub?url=${subUrlEnc}`,
+        `happ://add/${subUrl}`,
         `happ://subscription/add?url=${subUrlEnc}`,
         `happ://install-config?url=${subUrlEnc}`
       ],
