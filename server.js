@@ -10,22 +10,21 @@ const gameTunnel = require('./src/engine/game_tunnel');
 const EXTERNAL_KEY_VERIFY_URL = process.env.EXTERNAL_KEY_VERIFY_URL || 'https://key-system-yn0o.onrender.com/api/verify';
 
 async function verifyExternalKey({ key, hwid, device_model, device_os }) {
-  // Matches Nacer-22/key-system: POST /api/verify { code, device_id }
-  try {
-    const r = await fetch(EXTERNAL_KEY_VERIFY_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify({ code: key, device_id: hwid, key, hwid, device_model, device_os }),
-    });
+  // Prefer /api/check (no device-slot consumption) then /api/verify
+  const baseUrl = EXTERNAL_KEY_VERIFY_URL.replace(/\/api\/verify\/?$/, '');
+  const payload = { code: key, device_id: hwid, key, hwid, device_model, device_os };
+  async function tryUrl(url) {
+    const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(payload) });
     const data = await r.json().catch(() => ({}));
-    if (data && (data.valid === true || data.ok === true || data.success === true)) {
-      return { ok: true, source: 'external', data };
-    }
-    if (data && data.valid === false) {
-      return { ok: false, source: 'external', data };
-    }
-    if (r.status === 401 || r.status === 403) return { ok: false, source: 'external', data };
-    return { ok: false, inconclusive: true, source: 'external', data, status: r.status };
+    return { r, data };
+  }
+  try {
+    let { r, data } = await tryUrl(baseUrl + '/api/check');
+    if (!(r && data && typeof data.valid !== 'undefined')) ({ r, data } = await tryUrl(EXTERNAL_KEY_VERIFY_URL));
+    if (data && (data.valid === true || data.ok === true || data.success === true)) return { ok: true, source: 'external', data };
+    if (data && data.valid === false) return { ok: false, source: 'external', data };
+    if (r && (r.status === 401 || r.status === 403)) return { ok: false, source: 'external', data };
+    return { ok: false, inconclusive: true, source: 'external', data, status: r && r.status };
   } catch (e) {
     return { ok: false, inconclusive: true, source: 'external', error: String(e) };
   }
