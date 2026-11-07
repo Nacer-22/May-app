@@ -418,7 +418,9 @@ const server = http.createServer(async (req, res) => {
     const hwid = tok ? (tok.hwid || 'sub-device') : (url.searchParams.get('hwid') || url.searchParams.get('device_id') || ('sub-' + Buffer.from(key||'x').toString('hex').slice(0,12))).trim();
     let keyRecord = key ? db.findKey(key) : null;
     let extOk = false, extExp = null, extReason = '';
-    if (key) {
+    // If key exists locally and is active, trust it (no need for external check)
+    const localActiveNow = keyRecord && keyRecord.status === 'active';
+    if (key && !localActiveNow) {
       try {
         const vr = await verifyExternalKey({ key, hwid, device_model: 'sub', device_os: 'sub' });
         if (vr && vr.ok) { extOk = true; extExp = vr.data && (vr.data.expires_at || vr.data.expiry || vr.data.expires); }
@@ -430,10 +432,9 @@ const server = http.createServer(async (req, res) => {
       try { db.addKey(keyRecord); } catch(e) { try { db.updateKey(key, keyRecord); } catch(_){} }
     }
     const expired = keyRecord && keyRecord.expires_at && new Date(keyRecord.expires_at).getTime() < Date.now();
-    // Resilient: trust signed token; allow existing active local key if external check is temporarily inconclusive
     const tokenTrusted = !!(tok && tok.key);
     const localActive = keyRecord && keyRecord.status === 'active' && !expired;
-    const allowSub = tokenTrusted || extOk || (localActive && extReason === 'external_inconclusive');
+    const allowSub = tokenTrusted || extOk || localActive;
     if (!allowSub || (keyRecord && keyRecord.status === 'revoked') || expired) {
       const reason = expired ? 'expired' : (keyRecord && keyRecord.status==='revoked' ? 'revoked' : extReason || 'invalid');
       res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
