@@ -291,8 +291,9 @@ function attachDashboardEvents() {
         state.isConnected = true;
         localStorage.setItem('nacerxrida_vpn_connected', 'true');
         renderDashboard();
-        const link = (data && (data.deepLink || (data.deepLinks && data.deepLinks[0]))) || 'happ://add/' + encodeURIComponent(data.subscriptionUrl || '');
-        if (link) window.location.href = link;
+        const link = (data && (data.deepLink || (data.deepLinks && data.deepLinks[0]))) || (data && data.subscriptionUrl ? 'happ://add/' + encodeURIComponent(data.subscriptionUrl) : '');
+        if (link) { window.location.href = link; }
+        else if (data && data.subscriptionUrl) { window.open(data.subscriptionUrl, '_blank'); }
         else alert('تعذر إنشاء رابط الاشتراك');
       } catch (e) {
         alert('تعذر الاتصال بالخادم (تأكد أن may-app يعمل): ' + (e && e.message ? e.message : e));

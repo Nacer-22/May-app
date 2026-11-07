@@ -560,7 +560,7 @@ const server = http.createServer(async (req, res) => {
     const host = req.headers['x-forwarded-host'] || req.headers.host || 'may-app.onrender.com';
     const nodeSel = (body.node || body.server || '').toString();
     const subToken = makeSubToken(key, hwid, 7*24*3600);
-    const subUrl = `${proto}://${host}/api/subscription?key=${encodeURIComponent(key)}${nodeSel ? `&node=${encodeURIComponent(nodeSel)}` : ''}`;
+    const subUrl = `${proto}://${host}/api/subscription?key=${encodeURIComponent(key)}`;
     const subUrlEnc = encodeURIComponent(subUrl);
     const displayName = `N_x_R:${keyTail}`;
     return sendJson(res, 200, {
@@ -573,6 +573,7 @@ const server = http.createServer(async (req, res) => {
       deepLinks: [
         `happ://add/${subUrlEnc}`,
         `happ://add/${subUrl}`,
+        `happ://add/sub?url=${subUrlEnc}`,
         `happ://subscription/add?url=${subUrlEnc}`,
         `happ://install-config?url=${subUrlEnc}`
       ],
