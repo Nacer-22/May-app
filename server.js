@@ -382,21 +382,25 @@ const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     const key = (url.searchParams.get('key') || url.searchParams.get('token') || '').trim().toUpperCase();
     const nodeSel = (url.searchParams.get('node') || '').trim();
+    const hwid = (url.searchParams.get('hwid') || url.searchParams.get('device_id') || ('sub-' + Buffer.from(key).toString('hex').slice(0,12))).trim();
     let keyRecord = key ? db.findKey(key) : null;
-    let extOk = false, extExp = null;
+    let extOk = false, extExp = null, extReason = '';
     if (key) {
       try {
-        const vr = await verifyExternalKey({ key, hwid: 'sub', device_model: 'sub', device_os: 'sub' });
+        const vr = await verifyExternalKey({ key, hwid, device_model: 'sub', device_os: 'sub' });
         if (vr && vr.ok) { extOk = true; extExp = vr.data && (vr.data.expires_at || vr.data.expiry || vr.data.expires); }
-      } catch(e) {}
+        else extReason = (vr && vr.data && (vr.data.reason||vr.data.error||vr.data.message)) || (vr && vr.error) || (vr && vr.inconclusive ? 'external_inconclusive' : 'invalid');
+      } catch(e) { extReason = String(e).slice(0,80); }
     }
     if (!keyRecord && extOk) {
-      keyRecord = { key, status:'active', expires_at: extExp || new Date(Date.now()+365*24*3600*1000).toISOString(), data_limit_gb:64, data_used_gb:0, bound_hwid:null, features: db.get().global_features };
+      keyRecord = { key, status:'active', expires_at: extExp || new Date(Date.now()+365*24*3600*1000).toISOString(), data_limit_gb:64, data_used_gb:0, bound_hwid:hwid, features: db.get().global_features };
       try { db.addKey(keyRecord); } catch(e) { try { db.updateKey(key, keyRecord); } catch(_){} }
     }
-    if ((!keyRecord && !extOk) || (keyRecord && keyRecord.status === 'revoked') || (keyRecord && keyRecord.expires_at && new Date(keyRecord.expires_at).getTime() < Date.now())) {
+    const expired = keyRecord && keyRecord.expires_at && new Date(keyRecord.expires_at).getTime() < Date.now();
+    if ((!keyRecord && !extOk) || (keyRecord && keyRecord.status === 'revoked') || expired) {
+      const reason = expired ? 'expired' : (keyRecord && keyRecord.status==='revoked' ? 'revoked' : extReason || 'invalid');
       res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
-      res.end('# subscription unavailable: invalid, expired, or revoked key');
+      res.end('# subscription unavailable: ' + reason);
       return;
     }
     const quotaGb = Number((keyRecord && keyRecord.data_limit_gb) || 64);
