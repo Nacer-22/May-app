@@ -436,6 +436,16 @@ const server = http.createServer(async (req, res) => {
       res.end('# subscription unavailable: ' + reason);
       return;
     }
+    // One connection per key: bind to first hwid
+    if (keyRecord) {
+      if (!keyRecord.bound_hwid && hwid) {
+        try { db.updateKey(key, { bound_hwid: hwid }); keyRecord.bound_hwid = hwid; } catch(e){}
+      } else if (keyRecord.bound_hwid && hwid && keyRecord.bound_hwid !== hwid) {
+        res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
+        res.end('# subscription unavailable: key already bound to another device');
+        return;
+      }
+    }
     const quotaGb = Number((keyRecord && keyRecord.data_limit_gb) || 64);
     const usedGb = Number((keyRecord && keyRecord.data_used_gb) || 0);
     if (quotaGb > 0 && usedGb >= quotaGb) {
@@ -504,13 +514,16 @@ const server = http.createServer(async (req, res) => {
       created_at: new Date().toISOString(),
       nodes: nodes.map(n => ({
         id: n.id,
-        name: `${n.flag} ${n.name} N_x_R:${keyTail}`,
-        ping: `${n.ping||''}ms`,
+        name: `N_x_R:${keyTail}`,
         status: n.status
       })),
-      active_features: db.get().global_features,
+      active_features: (keyRecord && keyRecord.features) ? keyRecord.features : db.get().global_features,
       routing: {
-        rules: [{ domain_suffix: ['freefiremobile.com', 'garena.com'], outbound: 'nacerxrida-tunnel' }]
+        domainStrategy: "AsIs",
+        rules: [
+          { type: "field", domain: ["domain:freefiremobile.com","domain:garena.com","domain:ff.garena.com"], outboundTag: "proxy" },
+          { type: "field", network: "udp,tcp", outboundTag: "direct" }
+        ]
       }
     };
 
