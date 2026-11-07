@@ -404,7 +404,15 @@ const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     const token = (url.searchParams.get('token') || '').trim();
     const tok = token ? verifySubToken(token) : null;
-    const key = tok ? tok.key : (url.searchParams.get('key') || '').trim().toUpperCase();
+    let key = tok ? tok.key : (url.searchParams.get('key') || '').trim().toUpperCase();
+    // Fallback: extract key from token payload even if signature fails
+    if (!key && token && token.includes('.')) {
+      try {
+        const [payload] = token.split('.');
+        const obj = JSON.parse(Buffer.from(payload.replace(/-/g,'+').replace(/_/g,'/'),'base64').toString('utf8'));
+        if (obj && obj.k) key = String(obj.k).toUpperCase();
+      } catch(e) {}
+    }
     const nodeSel = (url.searchParams.get('node') || '').trim();
     const hwid = tok ? (tok.hwid || 'sub-device') : (url.searchParams.get('hwid') || url.searchParams.get('device_id') || ('sub-' + Buffer.from(key||'x').toString('hex').slice(0,12))).trim();
     let keyRecord = key ? db.findKey(key) : null;
@@ -510,7 +518,7 @@ const server = http.createServer(async (req, res) => {
     const hwid = (body.hwid || body.device_id || 'app').toString();
     const nodeSel = (body.node || body.server || '').toString();
     const subToken = makeSubToken(key, hwid, 7*24*3600);
-    const subUrl = `${proto}://${host}/api/subscription?token=${encodeURIComponent(subToken)}${nodeSel ? `&node=${encodeURIComponent(nodeSel)}` : ''}`;
+    const subUrl = `${proto}://${host}/api/subscription?token=${encodeURIComponent(subToken)}&key=${encodeURIComponent(key)}${nodeSel ? `&node=${encodeURIComponent(nodeSel)}` : ''}`;
     const subUrlEnc = encodeURIComponent(subUrl);
     const displayName = `N_x_R:${keyTail}`;
     return sendJson(res, 200, {
