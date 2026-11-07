@@ -386,26 +386,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
       try {
         const dev = await getRealClientDevice();
-        const res = await fetch('/api/redeem', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key: val, hwid: dev.hwid, device_model: dev.device_model, device_os: dev.device_os })
-        });
-        const data = await res.json().catch(() => ({}));
+        // Direct verification with key-system (works on static hosting / GitHub Pages)
+        const KEY_API = (window.NACER_KEY_API || 'https://key-system-yn0o.onrender.com') + '/api/verify';
+        let data = null, res = null, ok = false;
+        try {
+          res = await fetch(KEY_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: val, device_id: dev.hwid, key: val, hwid: dev.hwid })
+          });
+          data = await res.json().catch(() => ({}));
+          ok = !!(data && data.valid === true);
+        } catch (e) {
+          // fallback to same-origin Node server if available
+          res = await fetch('/api/redeem', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: val, hwid: dev.hwid, device_model: dev.device_model, device_os: dev.device_os })
+          });
+          data = await res.json().catch(() => ({}));
+          ok = !!res.ok;
+        }
 
-        if (res.ok) {
+        if (ok) {
           state.auth.loggedIn = true;
           state.auth.key = val;
-          if (data.me) state.auth.me = { ...state.auth.me, ...data.me };
+          state.auth.me = {
+            ...(state.auth.me || {}),
+            ...(data.me || {}),
+            status: 'active',
+            bound_hwid: dev.hwid,
+            device_model: dev.device_model,
+            device_os: dev.device_os,
+            expires_at: data.expires_at || (data.me && data.me.expires_at) || new Date(Date.now() + 365*24*3600*1000).toISOString(),
+            features: (data.me && data.me.features) || (state.auth.me && state.auth.me.features) || {}
+          };
           localStorage.setItem('nacerxrida_session', JSON.stringify({ key: val, me: state.auth.me }));
           renderDashboard();
         } else {
-          alert(data.error || 'Invalid key');
+          alert((data && (data.reason || data.error || data.message)) || 'Invalid key');
           unlockBtn.textContent = 'Unlock';
           unlockBtn.disabled = false;
         }
       } catch (err) {
-        alert('Network error');
+        alert('Network error: ' + (err && err.message ? err.message : ''));
         unlockBtn.textContent = 'Unlock';
         unlockBtn.disabled = false;
       }
