@@ -375,13 +375,25 @@ const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     const key = (url.searchParams.get('key') || url.searchParams.get('token') || 'NXRD-TEST').trim();
     const nodes = (db.get().nodes || []).filter(n => n && n.status !== 'offline');
-    // Placeholder share lines; replace with real protocol URIs (vless/vmess/trojan/ss) from admin/node config
-    const lines = nodes.map(n => {
-      const name = encodeURIComponent(`${n.flag||''} ${n.name||n.id||'Node'} [${key}]`.trim());
-      const host = n.host || '127.0.0.1'; const port = n.port || 443;
-      return `trojan://REPLACE_PASSWORD@${host}:${port}?security=tls&type=tcp#${name}`;
-    });
-    const bodyText = lines.join('\n') || `# Nacer_x_Rida subscription for ${key}\n# No active nodes configured. Add real VPN node URIs in server/admin config.`;
+    // Use real protocol URIs from node.uri/link/share/raw or SUB_NODES env/config; fallback placeholder
+    let lines = [];
+    if (process.env.SUB_NODES) {
+      lines = process.env.SUB_NODES.split(/\r?\n|,/).map(x=>x.trim()).filter(Boolean);
+    }
+    if (!lines.length) {
+      lines = nodes.map(n => {
+        if (n && (n.uri || n.link || n.share || n.raw)) return String(n.uri || n.link || n.share || n.raw).trim();
+        return null;
+      }).filter(Boolean);
+    }
+    if (!lines.length) {
+      lines = nodes.map(n => {
+        const name = encodeURIComponent(`${n.flag||''} ${n.name||n.id||'Node'} [${key}]`.trim());
+        const host = n.host || '127.0.0.1'; const port = n.port || 443;
+        return `trojan://REPLACE_PASSWORD@${host}:${port}?security=tls&type=tcp#${name}`;
+      });
+    }
+    const bodyText = lines.join('\n') || `# Nacer_x_Rida subscription for ${key}\n# No nodes configured`;
     res.writeHead(200, {
       'Content-Type': 'text/plain; charset=utf-8',
       'Access-Control-Allow-Origin': '*',
