@@ -1,8 +1,8 @@
 export const CONFIG = {
   "BRAND_WORDMARK": "Nacer_x_Rida",
   "BRAND_TAGLINE": "key login, tunnel status, live match features.",
-  "KEY_PREFIX": "NXRD",
-  "KEY_PLACEHOLDER": "NXRD-XXXX-XXXX-XXXX",
+  "KEY_PREFIX": "NACER",
+  "KEY_PLACEHOLDER": "NACER-XXXX-XXXX-XXXX",
   "IS_XREG": false,
   "SOCIAL_DISCORD_URL": "https://discord.gg/Km6Hsxk7Y4",
   "SOCIAL_TELEGRAM_URL": "",

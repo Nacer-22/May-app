@@ -418,7 +418,16 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function formatKey(val) {
-  return (val.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 19).match(/.{1,4}/g) ?? []).join('-');
+  const c = val.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 17);
+  if (!c) return '';
+  // Nacer-XXXX-XXXX-XXXX (5+4+4+4)
+  if (c.startsWith('NACER')) {
+    const r = c.slice(5);
+    let o = 'NACER';
+    if (r.length) o += '-' + (r.match(/.{1,4}/g)||[]).join('-');
+    return o.slice(0, 19);
+  }
+  return (c.match(/.{1,4}/g) ?? []).join('-').slice(0, 19);
 }
 
 async function getRealClientDevice() {

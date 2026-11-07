@@ -10,41 +10,25 @@ const gameTunnel = require('./src/engine/game_tunnel');
 const EXTERNAL_KEY_VERIFY_URL = process.env.EXTERNAL_KEY_VERIFY_URL || 'https://key-system-yn0o.onrender.com/api/verify';
 
 async function verifyExternalKey({ key, hwid, device_model, device_os }) {
-  const payloads = [
-    { key, hwid, device_model, device_os, license: key, code: key, device_id: hwid },
-    { key, hwid },
-    { license: key, hwid },
-    { code: key, hwid },
-    { key },
-  ];
-  let last = null;
-  for (const body of payloads) {
-    try {
-      const r = await fetch(EXTERNAL_KEY_VERIFY_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      const data = await r.json().catch(() => ({}));
-      last = { status: r.status, data, bodySent: Object.keys(body) };
-      // success interpretations
-      if (data && (data.valid === true || data.ok === true || data.success === true || data.status === 'active' || data.status === 'success' || data.authorized === true)) {
-        return { ok: true, source: 'external', data, payload: body };
-      }
-      // explicit invalid (not missing params) => stop trying
-      if (data && (data.valid === false || data.ok === false || data.success === false) && data.reason && data.reason !== 'missing_params') {
-        return { ok: false, source: 'external', data, payload: body };
-      }
-      if (r.status === 401 || r.status === 403) {
-        return { ok: false, source: 'external', data, payload: body };
-      }
-      // if missing_params, try next payload
-    } catch (e) {
-      last = { error: String(e) };
+  // Matches Nacer-22/key-system: POST /api/verify { code, device_id }
+  try {
+    const r = await fetch(EXTERNAL_KEY_VERIFY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ code: key, device_id: hwid, key, hwid, device_model, device_os }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (data && (data.valid === true || data.ok === true || data.success === true)) {
+      return { ok: true, source: 'external', data };
     }
+    if (data && data.valid === false) {
+      return { ok: false, source: 'external', data };
+    }
+    if (r.status === 401 || r.status === 403) return { ok: false, source: 'external', data };
+    return { ok: false, inconclusive: true, source: 'external', data, status: r.status };
+  } catch (e) {
+    return { ok: false, inconclusive: true, source: 'external', error: String(e) };
   }
-  // if external was reachable but kept saying missing_params/unclear, treat as inconclusive
-  return { ok: false, inconclusive: true, source: 'external', last };
 }
 
 
@@ -300,7 +284,7 @@ const server = http.createServer(async (req, res) => {
       // External inconclusive/unreachable: fallback to local DB behavior
       if (!keyRecord) {
         keyRecord = {
-          key: key.startsWith('NXRD') ? key : `NXRD-${key.padEnd(4, 'X').slice(0, 4)}-LOCAL-KEY`,
+          key: key.startsWith('NACER') ? key : `NACER-${key.padEnd(4, 'X').slice(0, 4)}-LOCAL-KEY`,
           status: 'active',
           bound_hwid: clientHwid,
           device_model: clientDeviceModel,
