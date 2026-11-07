@@ -1,5 +1,0 @@
-Nacer_X_Rida safe UI-only project derived from Phantom_cracer.zip.
-The source archive is not modified.
-Removed from this output: control panel/admin assets, admin API, game tunnel, packet interceptor, and game feature controls.
-The login proxy forwards only { key } to AUTH_API_URL and requires explicit success in the upstream JSON response.
-The remote server's endpoint contract was not reachable for independent verification in this environment.

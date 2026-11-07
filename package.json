@@ -1,0 +1,17 @@
+{
+  "name": "nacerxrida-Nacer_x_Rida-client",
+  "version": "1.7.0",
+  "description": "Nacer_x_Rida — key login, tunnel status, live match features replica",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "nacerxrida",
+    "Nacer_x_Rida",
+    "client"
+  ],
+  "author": "Nacer_x_Rida",
+  "license": "ISC"
+}

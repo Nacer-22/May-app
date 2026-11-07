@@ -3,43 +3,31 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-  <meta name="theme-color" content="#050505" />
-  <title>Nacer_X_Rida</title>
-  <meta name="description" content="Nacer_X_Rida secure access portal." />
-
-  <meta property="og:type" content="website" />
-  <meta property="og:title" content="Nacer_X_Rida" />
-  <meta property="og:description" content="Nacer_X_Rida secure access portal." />
-  <meta property="og:image" content="public/opengraph-image.png" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Nacer_X_Rida" />
-  <meta name="twitter:image" content="public/opengraph-image.png" />
-
-  <link rel="icon" type="image/png" href="public/icon.png" />
-  <link rel="apple-touch-icon" href="public/apple-icon.png" />
+  <meta name="theme-color" content="#0a0000" />
+  <title>Nacer_x_Rida</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="src/styles.css?v=3.0.0" />
+  <link rel="stylesheet" href="src/styles.css" />
 
   <style>
     :root {
-      --bg-color: #050505;
-      --card-bg: #0c0c0e;
-      --border-color: #1a1a1e;
-      --accent-red: #e50914;
-      --text-main: #ffffff;
-      --text-muted: #71717a;
+      --bg-color: #050000;
+      --card-bg: #120606;
+      --border-color: #2a0b0b;
+      --accent-red: #ff1f1f;
+      --text-main: #fff5f5;
+      --text-muted: #b08a8a;
       --font-title: 'Anton', sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    body { background: var(--bg-color); color: var(--text-main); font-family: var(--font-mono); min-height: 100vh; overflow-x: hidden; display: flex; justify-content: center; }
+    body { background: radial-gradient(circle at 20% 0%, #2a0000 0%, #050000 45%, #000 100%); color: var(--text-main); font-family: var(--font-mono); min-height: 100vh; overflow-x: hidden; display: flex; justify-content: center; }
+    .theme-bar { position: fixed; top: 10px; right: 10px; z-index: 50; display:flex; gap:6px; }
+    .theme-bar button { border:1px solid #ff2a2a55; background:#140404cc; color:#ffdede; border-radius:999px; padding:6px 10px; font: 11px var(--font-mono); cursor:pointer; backdrop-filter: blur(8px); }
+    .theme-bar button:hover { box-shadow:0 0 14px #ff1f1f44; }
 
     #app { width: 100%; max-width: 440px; min-height: 100vh; display: flex; flex-direction: column; position: relative; }
 
@@ -60,24 +48,28 @@
     .btn-unlock-cyber { width: 100%; background: var(--accent-red); color: #ffffff; border: none; padding: 18px; font-family: var(--font-title); font-size: 22px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%); box-shadow: 0 8px 25px rgba(229, 9, 20, 0.35); margin-bottom: 28px; transition: transform 0.2s; }
     .btn-unlock-cyber:active { transform: scale(0.98); }
   </style>
-<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
 </head>
-<body>
+<body data-theme="redblack">
+  <canvas id="nxr-fx-canvas" aria-hidden="true"></canvas>
+  <div class="theme-bar" aria-label="Themes">
+    <button type="button" data-set-theme="redblack">Red/Black</button>
+    <button type="button" data-set-theme="crimson">Crimson</button>
+    <button type="button" data-set-theme="ember">Ember</button>
+  </div>
 
-  <div id="app">
+  <div id="app" style="position:relative;z-index:1;">
     <div class="login-container">
-      <img src="logo.png" alt="Nacer_X_Rida" class="brand-logo-img" onerror="this.onerror=null; this.style.display='none';" />
-      <h1 class="login-title">Nacer_X_Rida</h1>
+      <img src="logo.png" alt="Nacer_x_Rida" class="brand-logo-img" onerror="this.onerror=null; this.style.display='none';" />
+      <h1 class="login-title">Nacer_x_Rida</h1>
       <p class="login-sub">NO ACCOUNT. NO PASSWORD. JUST YOUR KEY.</p>
 
       <div class="input-label-cyber">ACCESS KEY</div>
       <div class="key-input-cyber-wrap">
-        <input type="text" id="access-key-input" class="key-input-cyber" placeholder="Nacer-XXXX-XXXX-XXXX" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="text" maxlength="20" aria-label="Access key" />
+        <input type="text" id="access-key-input" class="key-input-cyber" placeholder="NXRD-XXXX-XXXX-XXXX" autocomplete="off" spellcheck="false" maxlength="19" />
         <button type="button" class="paste-btn-cyber" id="paste-btn">PASTE</button>
       </div>
 
       <button type="button" class="btn-unlock-cyber" id="unlock-btn">UNLOCK</button>
-      <p id="auth-status" role="status" aria-live="polite" style="display:none; width:100%; margin:-12px 0 18px; font-size:11px; line-height:1.6; text-align:center;"></p>
 
       <p style="font-size: 11px; color: var(--text-muted); line-height: 1.6;">
         No key? Contact your seller.<br>
@@ -86,18 +78,47 @@
     </div>
   </div>
 
-  <script type="module" src="src/app.js?v=4.0.2"></script>
+  <script type="module" src="src/app.js"></script>
   <script>
     document.getElementById('paste-btn').addEventListener('click', async () => {
       try {
         const text = await navigator.clipboard.readText();
-        if (text) {
-          const el = document.getElementById('access-key-input');
-          el.value = text.trim();
-          el.dispatchEvent(new Event('input', { bubbles: true }));
-        }
+        if (text) document.getElementById('access-key-input').value = text.trim();
       } catch (err) { alert('Please allow clipboard permission'); }
     });
+
+    // Nacer_x_Rida themes + visual effects
+    (function(){
+      const root = document.documentElement;
+      const saved = localStorage.getItem('nxr_theme') || 'redblack';
+      root.setAttribute('data-theme', saved);
+      document.body.setAttribute('data-theme', saved);
+      document.querySelectorAll('[data-set-theme]').forEach(btn=>{
+        const apply=()=>{ const t=btn.getAttribute('data-set-theme'); root.setAttribute('data-theme',t); document.body.setAttribute('data-theme',t); localStorage.setItem('nxr_theme',t); };
+        btn.addEventListener('click', apply);
+      });
+      const c = document.getElementById('nxr-fx-canvas');
+      if(!c) return;
+      const ctx = c.getContext('2d');
+      let w,h,pts=[];
+      function resize(){ w=c.width=innerWidth; h=c.height=innerHeight; pts=Array.from({length: Math.min(70, Math.floor(w*h/22000))},()=>({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.8+.4,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,a:Math.random()*.5+.15})); }
+      addEventListener('resize', resize); resize();
+      function draw(){
+        ctx.clearRect(0,0,w,h);
+        for(const p of pts){
+          p.x+=p.vx; p.y+=p.vy;
+          if(p.x<0||p.x>w) p.vx*=-1; if(p.y<0||p.y>h) p.vy*=-1;
+          ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+          ctx.fillStyle=`rgba(255,40,40,${p.a})`; ctx.fill();
+        }
+        for(let i=0;i<pts.length;i++) for(let j=i+1;j<pts.length;j++){
+          const a=pts[i],b=pts[j],dx=a.x-b.x,dy=a.y-b.y,d=dx*dx+dy*dy;
+          if(d<14000){ ctx.strokeStyle=`rgba(255,30,30,${(1-d/14000)*.12})`; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); }
+        }
+        requestAnimationFrame(draw);
+      }
+      draw();
+    })();
   </script>
 </body>
 </html>
