@@ -487,7 +487,7 @@ const server = http.createServer(async (req, res) => {
       const tagPrefix = `N_x_R:${tail}`;
       lines = nodes.map(n => {
         const name = encodeURIComponent(`${n.flag||''} ${n.name||n.id||'Node'} ${tagPrefix}`.trim());
-        const host = n.host || '127.0.0.1'; const port = n.port || 443;
+        const host = n.host || 'may-app.onrender.com'; const port = n.port || 443;
         return `trojan://00000000-0000-0000-0000-000000000000@${host}:${port}?security=tls&type=tcp#${name}`;
       });
     }
@@ -567,11 +567,11 @@ const server = http.createServer(async (req, res) => {
       siteUrl: `${proto}://${host}/`,
       href: `${proto}://${host}/`,
       subscriptionUrl: subUrlSimple,
-      deepLink: `happ://add/sub?url=${subUrlEnc}`,
+      deepLink: `happ://add/${subUrlSimple}`,
       deepLinks: [
-        `happ://add/sub?url=${subUrlEnc}`,
-        `happ://add/${subUrlEnc}`,
         `happ://add/${subUrlSimple}`,
+        `happ://add/${subUrlEnc}`,
+        `happ://add/sub?url=${subUrlEnc}`,
         `happ://subscription/add?url=${subUrlEnc}`,
         `happ://install-config?url=${subUrlEnc}`
       ],

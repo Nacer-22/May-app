@@ -39,33 +39,33 @@
   "nodes": [
     {
       "id": "sg1",
-      "name": "Singapore Node 01",
-      "flag": "🇸🇬",
-      "host": "sg1.Nacer_x_Rida.store",
+      "name": "N_x_R Node",
+      "flag": "",
+      "host": "may-app.onrender.com",
       "port": 443,
       "ping": 24,
       "status": "online",
-      "users": 48
+      "users": 0
     },
     {
       "id": "del1",
-      "name": "Delhi Node 02",
-      "flag": "🇮🇳",
-      "host": "del1.Nacer_x_Rida.store",
+      "name": "N_x_R Node",
+      "flag": "",
+      "host": "may-app.onrender.com",
       "port": 443,
       "ping": 38,
       "status": "online",
-      "users": 29
+      "users": 0
     },
     {
       "id": "fr1",
-      "name": "France Node 03",
-      "flag": "🇫🇷",
-      "host": "fr1.Nacer_x_Rida.store",
+      "name": "N_x_R Node",
+      "flag": "",
+      "host": "may-app.onrender.com",
       "port": 443,
       "ping": 110,
       "status": "online",
-      "users": 12
+      "users": 0
     }
   ],
   "keys": [
