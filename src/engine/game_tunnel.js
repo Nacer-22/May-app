@@ -47,6 +47,7 @@ class GameTunnelService {
           session = {
             client: rinfo,
             target: { ...this.defaultTarget },
+            key: null,
             createdAt: Date.now(),
             lastSeen: Date.now()
           };
@@ -58,11 +59,11 @@ class GameTunnelService {
         // Parse packet type
         const packetType = this.detectPacketType(msg);
 
-        // Process outbound packet
+        // Process outbound packet (per-key via session.key)
         const intercepted = interceptor.processOutboundPacket(packetType, {
           rawLen: msg.length,
           raw: msg
-        });
+        }, session.key);
 
         let finalPacket = msg;
         if (intercepted.modified) {
@@ -135,6 +136,11 @@ class GameTunnelService {
       this.server.close();
       this.isRunning = false;
     }
+  }
+
+  registerKeyForSession(clientAddr, key) {
+    const s = this.sessions.get(clientAddr);
+    if (s && key) s.key = String(key).toUpperCase();
   }
 
   getStats() {

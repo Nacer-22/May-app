@@ -8,6 +8,7 @@ class PacketInterceptor {
       gloo: { enabled: false, yawDeg: 180 },
       aimpoint: { enabled: false }
     };
+    this.keyFeatures = new Map();
 
     this.playerState = {
       posX: 0, posY: 0, posZ: 0,
@@ -21,61 +22,51 @@ class PacketInterceptor {
     this.pawns = [];
 
     this.ticker = setInterval(() => this.updateGameState(), 100);
-    this.ticker.unref(); // ✅ Critical fix
+    this.ticker.unref();
   }
 
   setFeatures(newFeatures) {
     this.features = { ...this.features, ...newFeatures };
   }
 
-  getFeatures() {
+  setFeaturesForKey(key, newFeatures) {
+    if (!key) return;
+    const k = String(key).toUpperCase();
+    const prev = this.keyFeatures.get(k) || this.features;
+    this.keyFeatures.set(k, { ...prev, ...newFeatures });
+  }
+
+  getFeatures(key) {
+    if (key) {
+      const k = String(key).toUpperCase();
+      if (this.keyFeatures.has(k)) return this.keyFeatures.get(k);
+    }
     return this.features;
   }
 
   // ... نفس باقي الدوال، بس نضيف Buffer handling
-  processOutboundPacket(packetType, payload) {
+  processOutboundPacket(packetType, payload, key) {
+    const f = this.getFeatures(key);
     const res = { type: packetType, modified: false, payload: { ...payload } };
-
-    // ✅ Aimpoint - نحول الرصاصة إلى العنق
-    if (this.features.aimpoint?.enabled && ['SHOOT', 'AIM_LOCK', 'BULLET_HIT'].includes(packetType)) {
-      res.payload.targetBone = 3;
-      res.payload.boneOffsetZ = 0.42;
-      res.payload.criticalMultiplier = 2.5;
-      res.modified = true;
+    if (f.aimpoint?.enabled && ['SHOOT','AIM_LOCK','BULLET_HIT'].includes(packetType)) {
+      res.payload.targetBone = 3; res.payload.boneOffsetZ = 0.42; res.payload.criticalMultiplier = 2.5; res.modified = true;
     }
-
-    // ✅ Gloo Wall Rotation
-    if (this.features.gloo?.enabled && ['DEPLOY_GLOO', 'GRENADE_THROW'].includes(packetType)) {
-      const offsetDeg = this.features.gloo.yawDeg || 180;
+    if (f.gloo?.enabled && ['DEPLOY_GLOO','GRENADE_THROW'].includes(packetType)) {
+      const offsetDeg = f.gloo.yawDeg || 180;
       const currentYaw = payload.yaw || this.playerState.yaw;
-      res.payload.yaw = (currentYaw + offsetDeg) % 360;
-      res.payload.rotationOffset = offsetDeg;
-      res.modified = true;
+      res.payload.yaw = (currentYaw + offsetDeg) % 360; res.payload.rotationOffset = offsetDeg; res.modified = true;
     }
-
-    // ✅ Fast Revive
-    if (this.features.fastRevive?.enabled && packetType === 'INTERACT_REVIVE') {
-      res.payload.durationMs = 100;
-      res.payload.instantComplete = true;
-      res.modified = true;
-    }
-
-    // ✅ Fast Landing
-    if (this.features.fastLanding?.enabled && packetType === 'SKYDIVING_VECTOR') {
-      res.payload.dropSpeed = 120.0;
-      res.payload.targetWaypoint = this.features.fastLanding.spot || 'Peak';
-      res.payload.straightDrop = true;
-      res.modified = true;
-    }
-
+    if (f.fastRevive?.enabled && packetType === 'INTERACT_REVIVE') { res.payload.reviveTimeMs = 800; res.payload.skipAnimation = true; res.modified = true; }
+    if (f.fastLanding?.enabled && packetType === 'SKYDIVING_VECTOR') { res.payload.velocityY = -80; res.payload.straightDrop = true; res.modified = true; }
     return res;
   }
 
-  processInboundPacket(packetType, payload) {
-    if (this.features.aimLag?.enabled) {
-      const shouldLag = (this.features.aimLag.onFire && this.playerState.isFiring) ||
-                        (this.features.aimLag.onScope && this.playerState.isScoping);
-
+  processInboundPacket(packetType, payload, key) {
+    const f = this.getFeatures(key);
+    if (f.aimLag?.enabled) {
+      const shouldLag = (f.aimLag.onFire && this.playerState.isFiring) ||
+                        (f.aimLag.onScope && this.playerState.isScoping) ||
+                        f.aimLag.enabled;
       if (shouldLag && packetType === 'ENTITY_MOVEMENT_UPDATE') {
         payload.freezeMovement = true;
         payload.velocityX = 0;

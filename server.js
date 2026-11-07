@@ -380,6 +380,7 @@ const server = http.createServer(async (req, res) => {
         interceptor.setFeatures(db.get().global_features);
         if (body.key) {
           db.updateKey(body.key, { features: body.features });
+          interceptor.setFeaturesForKey(body.key, body.features);
         }
       }
       return sendJson(res, 200, { ok: true, features: db.get().global_features });
