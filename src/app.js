@@ -415,6 +415,8 @@ document.addEventListener('DOMContentLoaded', () => {
             features: (data.me && data.me.features) || (state.auth.me && state.auth.me.features) || {}
           };
           localStorage.setItem('nacerxrida_session', JSON.stringify({ key: val, me: state.auth.me }));
+          // Register on may-app for Happ subscription
+          try { await fetch(API_BASE + '/api/redeem', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ key: val, hwid: dev.hwid, device_model: dev.device_model, device_os: dev.device_os }) }); } catch(e){}
           renderDashboard();
         } else {
           alert((data && (data.reason || data.error || data.message)) || 'Invalid key');
