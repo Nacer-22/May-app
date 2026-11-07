@@ -513,8 +513,23 @@ const server = http.createServer(async (req, res) => {
   // Happ Tunnel Config Generation
   if (pathname === '/api/happ' && req.method === 'POST') {
     const body = await parseJsonBody(req);
-    const key = body.key || 'PHTM-TEST-1234-5678';
+    const key = (body.key || 'PHTM-TEST-1234-5678').trim().toUpperCase();
+    const hwid = (body.hwid || body.device_id || 'app').toString();
     const keyTail = (String(key).replace(/[^A-Z0-9]/gi,'').slice(-4) || '0000').toUpperCase();
+    let keyRecord = db.findKey(key);
+    if (!keyRecord) {
+      try {
+        const vr = await verifyExternalKey({ key, hwid, device_model: body.device_model||'sub', device_os: body.device_os||'sub' });
+        if (vr && vr.ok) {
+          keyRecord = { key, status:'active', expires_at: vr.data && (vr.data.expires_at||vr.data.expiry) || new Date(Date.now()+365*24*3600*1000).toISOString(), data_limit_gb:64, data_used_gb:0, bound_hwid:hwid, features: db.get().global_features };
+          try { db.addKey(keyRecord); } catch(e) { try { db.updateKey(key, keyRecord); } catch(_){} }
+        } else if (vr && !vr.inconclusive) {
+          return sendJson(res, 403, { ok:false, error: (vr.data && (vr.data.reason||vr.data.error)) || 'invalid key' });
+        }
+      } catch(e) {}
+    }
+    if (keyRecord && !keyRecord.bound_hwid && hwid) { try { db.updateKey(key, { bound_hwid: hwid }); } catch(e){} }
+    if (keyRecord && keyRecord.bound_hwid && hwid && keyRecord.bound_hwid !== hwid) return sendJson(res, 403, { ok:false, error: 'key bound to another device' });
     const nodes = db.get().nodes;
 
     const configData = {
