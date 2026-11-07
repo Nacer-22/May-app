@@ -1,3 +1,4 @@
+const ADMIN_API_BASE = (window.ADMIN_API_BASE || window.API_BASE || '').replace(/\/$/,'') || (location.hostname.endsWith('github.io') ? 'https://may-app.onrender.com' : '');
 // Nacer_x_Rida Admin Panel Client Logic
 let allKeys = [];
 let currentFilter = 'all';
@@ -25,7 +26,7 @@ function formatExpiry(iso) {
 
 async function loadOverview() {
   try {
-    const res = await fetch('/api/admin/overview');
+    const res = await fetch(ADMIN_API_BASE + '/api/admin/overview');
     if (!res.ok) return;
     const data = await res.json();
 
@@ -58,7 +59,7 @@ async function loadOverview() {
 
 async function loadKeys() {
   try {
-    const res = await fetch('/api/admin/keys');
+    const res = await fetch(ADMIN_API_BASE + '/api/admin/keys');
     if (!res.ok) return;
     const data = await res.json();
     allKeys = data.keys || [];
@@ -258,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const note = document.getElementById('gen-note').value.trim();
 
       try {
-        const res = await fetch('/api/admin/keys/generate', {
+        const res = await fetch(ADMIN_API_BASE + '/api/admin/keys/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ prefix, days, count, note })
@@ -292,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const message = document.getElementById('maint-msg').value;
 
       try {
-        const res = await fetch('/api/admin/maintenance', {
+        const res = await fetch(ADMIN_API_BASE + '/api/admin/maintenance', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ enabled, allowed_logins, message })

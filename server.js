@@ -371,10 +371,33 @@ const server = http.createServer(async (req, res) => {
 
 
   // Subscription endpoint (for Happ / VPN clients) - returns a simple config/sub list
+
+  // Safe node list for client (no host/port)
+  if (pathname === '/api/nodes' && req.method === 'GET') {
+    const nodes = (db.get().nodes || []).map(n => ({ id:n.id, name:n.name, flag:n.flag, ping:n.ping, status:n.status }));
+    return sendJson(res, 200, { ok:true, nodes });
+  }
+
   if ((pathname === '/api/subscription' || pathname === '/sub' || pathname === '/subscription') && req.method === 'GET') {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-    const key = (url.searchParams.get('key') || url.searchParams.get('token') || 'NXRD-TEST').trim();
-    const nodes = (db.get().nodes || []).filter(n => n && n.status !== 'offline');
+    const key = (url.searchParams.get('key') || url.searchParams.get('token') || '').trim().toUpperCase();
+    const nodeSel = (url.searchParams.get('node') || '').trim();
+    const keyRecord = key ? db.findKey(key) : null;
+    if (!keyRecord || keyRecord.status === 'revoked' || (keyRecord.expires_at && new Date(keyRecord.expires_at).getTime() < Date.now())) {
+      res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
+      res.end('# subscription unavailable: invalid, expired, or revoked key');
+      return;
+    }
+    const quotaGb = Number(keyRecord.data_limit_gb || 64);
+    const usedGb = Number(keyRecord.data_used_gb || 0);
+    if (quotaGb > 0 && usedGb >= quotaGb) {
+      res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
+      res.end('# subscription unavailable: data limit reached');
+      return;
+    }
+    let nodes = (db.get().nodes || []).filter(n => n && n.status !== 'offline');
+    if (nodeSel) nodes = nodes.filter(n => n.id === nodeSel || n.name === nodeSel);
+    if (!nodes.length) nodes = (db.get().nodes || []).filter(n => n && n.status !== 'offline');
     // Use real protocol URIs from node.uri/link/share/raw or SUB_NODES env/config; fallback placeholder
     let lines = [];
     if (process.env.SUB_NODES) {
@@ -388,7 +411,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (!lines.length) {
       lines = nodes.map(n => {
-        const name = encodeURIComponent(`${n.flag||''} ${n.name||n.id||'Node'} [${key}]`.trim());
+        const name = encodeURIComponent(`${n.flag||''} ${n.name||n.id||'Node'}`.trim());
         const host = n.host || '127.0.0.1'; const port = n.port || 443;
         return `trojan://REPLACE_PASSWORD@${host}:${port}?security=tls&type=tcp#${name}`;
       });
@@ -417,10 +440,9 @@ const server = http.createServer(async (req, res) => {
       key: key,
       created_at: new Date().toISOString(),
       nodes: nodes.map(n => ({
+        id: n.id,
         name: `${n.flag} ${n.name}`,
-        address: n.host,
-        port: n.port,
-        ping: `${n.ping}ms`,
+        ping: `${n.ping||''}ms`,
         status: n.status
       })),
       active_features: db.get().global_features,
