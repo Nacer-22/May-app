@@ -126,6 +126,21 @@ function renderStatusTab(me) {
         <button id="copy-key-btn" style="background: #18181c; border: none; border-radius: 8px; color: #ffffff; padding: 8px 12px; font-size: 10px; font-weight: 700; cursor: pointer;">COPY</button>
       </div>
 
+      <!-- تحكم سريع بالإضافات من أزرار الموقع -->
+      <div style="width:100%; background:#0c0c0e; border:1px solid #1a1a1e; border-radius:14px; padding:12px; text-align:left;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <div style="font-size:10px; color:#71717a; letter-spacing:1px;">ADD-ONS / الإضافات</div>
+          <button type="button" onclick="(window.__setTab&&window.__setTab('features'))" style="background:none;border:none;color:#ff4d4d;font-size:10px;cursor:pointer;">المزيد</button>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          ${(()=>{const f=(me.features||{}); const m=f.marker||{}; const a=f.aimpoint||{}; const l=f.aimLag||{}; return `
+            <button type="button" data-toggle="marker" style="border:1px solid #2a0b0b; background:${m.enabled?'#ff1f1f':'#140404'}; color:${m.enabled?'#fff':'#ffdede'}; border-radius:10px; padding:8px 10px; font-size:11px; cursor:pointer;">Marker ${m.enabled?'ON':'OFF'}</button>
+            <button type="button" data-toggle="aimpoint" style="border:1px solid #2a0b0b; background:${a.enabled?'#ff1f1f':'#140404'}; color:${a.enabled?'#fff':'#ffdede'}; border-radius:10px; padding:8px 10px; font-size:11px; cursor:pointer;">Aimpoint ${a.enabled?'ON':'OFF'}</button>
+            <button type="button" data-toggle="aimLag" style="border:1px solid #2a0b0b; background:${l.enabled?'#ff1f1f':'#140404'}; color:${l.enabled?'#fff':'#ffdede'}; border-radius:10px; padding:8px 10px; font-size:11px; cursor:pointer;">AimLag ${l.enabled?'ON':'OFF'}</button>
+          `;})()}
+        </div>
+      </div>
+
       <!-- اختيار السيرفر (يتغير من الموقع) -->
       <div style="width:100%; background:#0c0c0e; border:1px solid #1a1a1e; border-radius:14px; padding:12px; text-align:left;">
         <div style="font-size:10px; color:#71717a; letter-spacing:1px; margin-bottom:8px;">SERVER / السيرفر</div>
