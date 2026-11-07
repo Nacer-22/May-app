@@ -495,18 +495,17 @@ const server = http.createServer(async (req, res) => {
     const tail = (key.replace(/[^A-Z0-9]/gi,'').slice(-4) || '0000').toUpperCase();
     const profileTitle = encodeURIComponent(`N_x_R:${tail}`);
     const siteUrl = `${(req.headers['x-forwarded-proto']||'https').split(',')[0]}://${req.headers['x-forwarded-host']||req.headers.host||'may-app.onrender.com'}`;
-    // Standard subscription: base64-encoded body
-    const b64Body = Buffer.from(bodyText, 'utf8').toString('base64');
+    const wantB64 = url.searchParams.get('b64') === '1';
+    const outBody = wantB64 ? Buffer.from(bodyText, 'utf8').toString('base64') : bodyText;
     res.writeHead(200, {
       'Content-Type': 'text/plain; charset=utf-8',
       'Access-Control-Allow-Origin': '*',
       'Profile-Update-Interval': '24',
       'Subscription-Userinfo': `upload=0; download=0; total=${Math.max(1, Math.floor(quotaGb*1024*1024*1024))}; expire=${Math.floor((new Date(keyRecord.expires_at||Date.now()+365*24*3600*1000).getTime())/1000)}`,
       'Profile-Title': profileTitle,
-      'Profile-Web-Page-Url': siteUrl,
-      'Content-Disposition': `inline; filename="N_x_R-${tail}"`
+      'Profile-Web-Page-Url': siteUrl
     });
-    res.end(b64Body);
+    res.end(outBody);
     return;
   }
 
@@ -568,12 +567,13 @@ const server = http.createServer(async (req, res) => {
       siteUrl: `${proto}://${host}/`,
       href: `${proto}://${host}/`,
       subscriptionUrl: subUrlSimple,
-      deepLink: `happ://add/${subUrlEnc}`,
+      deepLink: `happ://add/sub?url=${subUrlEnc}`,
       deepLinks: [
+        `happ://add/sub?url=${subUrlEnc}`,
         `happ://add/${subUrlEnc}`,
         `happ://add/${subUrlSimple}`,
-        `happ://install-config?url=${subUrlEnc}`,
-        `happ://subscription/add?url=${subUrlEnc}`
+        `happ://subscription/add?url=${subUrlEnc}`,
+        `happ://install-config?url=${subUrlEnc}`
       ],
       config: configData
     });
