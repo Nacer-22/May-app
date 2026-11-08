@@ -550,7 +550,7 @@ const server = http.createServer(async (req, res) => {
     const proto = (req.headers['x-forwarded-proto'] || 'https').split(',')[0];
     const host = req.headers['x-forwarded-host'] || req.headers.host || 'may-app.onrender.com';
     const nodeSel = 'fr1';
-    const subToken = makeSubToken(key, hwid, 7*24*3600);
+    const subToken = makeSubToken(key, hwid, 3600);
     const subUrl = `${proto}://${host}/api/subscription?token=${encodeURIComponent(subToken)}`;
     const subUrlEnc = encodeURIComponent(subUrl);
     const displayName = `N_x_R:${keyTail}`;
