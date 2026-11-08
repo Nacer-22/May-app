@@ -6,11 +6,26 @@ const db = require('./data/db');
 const interceptor = require('./src/engine/packet_interceptor');
 const gameTunnel = require('./src/engine/game_tunnel');
 
-// --- External Key Server Integration (Nacer_x_Rida) ---
+// --- Nacer_x_Rida Security Hardened ---
 const EXTERNAL_KEY_VERIFY_URL = process.env.EXTERNAL_KEY_VERIFY_URL || 'https://key-system-yn0o.onrender.com/api/verify';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Nacer_Nacer_22';
+const SUB_TOKEN_SECRET = process.env.SUB_TOKEN_SECRET || crypto.createHash('sha256').update(ADMIN_PASSWORD + '|nacerxrida-sub').digest('hex');
+const RATE_LIMIT_WINDOW = 15 * 60 * 1000;
+const RATE_LIMIT_MAX = 30;
+const _rateMap = new Map();
+function rateLimit(req){
+  const ip = req.socket.remoteAddress || 'unknown';
+  const now = Date.now();
+  const e = _rateMap.get(ip) || {c:0,t:now};
+  if (now - e.t > RATE_LIMIT_WINDOW){ e.c = 0; e.t = now; }
+  e.c++;
+  _rateMap.set(ip, e);
+  if (e.c > RATE_LIMIT_MAX) return false;
+  return true;
+}
+function sanitize(s){ return String(s||'').replace(/[<>&"'`]/g,''); }
+function isSafeKey(k){ return /^NACER[A-F0-9]{12,16}$/.test(String(k||'').toUpperCase()); }
 
-
-const SUB_TOKEN_SECRET = process.env.SUB_TOKEN_SECRET || crypto.createHash('sha256').update((process.env.ADMIN_PASSWORD||'') + '|nacerxrida-sub').digest('hex');
 
 function b64url(buf){ return Buffer.from(buf).toString('base64').replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_'); }
 function makeSubToken(key, hwid, ttlSec=86400){
@@ -63,8 +78,27 @@ interceptor.setFeatures(db.get().global_features);
 const PORT = process.env.PORT || 3000;
 const ROOT_DIR = __dirname;
 
+// --- Nacer_x_Rida Title ---
+const SITE_TITLE = 'Nacer_x_Rida';
+
+// CSP header for HTML responses
+function serveFile(res, filePath, contentType) {
+  fs.readFile(filePath, (err, content) => {
+    if (err) {
+      res.writeHead(err.code === 'ENOENT' ? 404 : 500, { 'Content-Type': 'text/plain; charset=utf-8', 'X-Content-Type-Options': 'nosniff' });
+      res.end(err.code === 'ENOENT' ? '404 Not Found' : '500 Internal Server Error');
+      return;
+    }
+    const headers = { 'Content-Type': contentType, 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'strict-origin-when-cross-origin' };
+    if (contentType.startsWith('text/html')) {
+      headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; img-src 'self' data:; connect-src 'self' https://key-system-yn0o.onrender.com; font-src 'self' https://fonts.gstatic.com;";
+    }
+    res.writeHead(200, headers);
+    res.end(content);
+  });
+}
+
 // كلمة مرور الأدمن (يمكن التحكم بها عبر متغيرات البيئة أو استخدام القيمة الافتراضية)
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'powerup-admin-2026';
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -96,7 +130,13 @@ function broadcastEvent(eventName, data) {
 function sendJson(res, statusCode, data) {
   res.writeHead(statusCode, {
     'Content-Type': 'application/json; charset=utf-8',
-    'Access-Control-Allow-Origin': '*'
+    'Access-Control-Allow-Origin': '*',
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'X-XSS-Protection': '1; mode=block',
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+    'Referrer-Policy': 'strict-origin-when-cross-origin'
   });
   res.end(JSON.stringify(data));
 }
@@ -104,13 +144,10 @@ function sendJson(res, statusCode, data) {
 function parseJsonBody(req) {
   return new Promise((resolve) => {
     let body = '';
-    req.on('data', chunk => body += chunk);
+    let size = 0;
+    req.on('data', chunk => { size += chunk.length; if (size > 1_000_000) { req.destroy(); resolve({}); return; } body += chunk; });
     req.on('end', () => {
-      try {
-        resolve(JSON.parse(body || '{}'));
-      } catch (e) {
-        resolve({});
-      }
+      try { resolve(JSON.parse(body || '{}')); } catch (e) { resolve({}); }
     });
   });
 }
@@ -171,6 +208,7 @@ function detectServerDevice(ua = '') {
 
 // دالة التحقق من صلاحية الأدمن عبر HTTP Basic Auth
 function isAdminAuthorized(req) {
+  if (!rateLimit(req)) return false;
   const auth = req.headers['authorization'];
   if (!auth) return false;
   const [type, creds] = auth.split(' ');
