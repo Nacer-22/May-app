@@ -321,7 +321,7 @@ const server = http.createServer(async (req, res) => {
           device_model: clientDeviceModel,
           device_os: clientDeviceOs,
           created_at: new Date().toISOString(),
-          expires_at: (external.data && (external.data.expires_at || external.data.expiry || external.data.expires)) || new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString(),
+          expires_at: (external.data && (external.data.expires_at || external.data.expiry || external.data.expires)) || new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
           note: 'Verified by external key server',
           features: db.get().global_features
         };
@@ -350,7 +350,7 @@ const server = http.createServer(async (req, res) => {
           device_model: clientDeviceModel,
           device_os: clientDeviceOs,
           created_at: new Date().toISOString(),
-          expires_at: new Date(Date.now() + 3650 * 24 * 3600 * 1000).toISOString(),
+          expires_at: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString(),
           note: 'Local fallback (external server unavailable)',
           features: db.get().global_features
         };
@@ -534,7 +534,7 @@ const server = http.createServer(async (req, res) => {
       'Content-Type': 'text/plain; charset=utf-8',
       'Access-Control-Allow-Origin': '*',
       'Profile-Update-Interval': '24',
-      'Subscription-Userinfo': `upload=0; download=0; total=${Math.max(1, Math.floor(quotaGb*1024*1024*1024))}; expire=${Math.floor((new Date(keyRecord.expires_at||Date.now()+365*24*3600*1000).getTime())/1000)}`,
+      'Subscription-Userinfo': `upload=0; download=0; total=${Math.max(1, Math.floor(quotaGb*1024*1024*1024))}; expire=${Math.floor((new Date(keyRecord.expires_at || Date.now()+365*24*3600*1000).getTime())/1000)}`,
       'Profile-Title': profileTitle,
       'Profile-Web-Page-Url': siteUrl
     });

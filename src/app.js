@@ -78,7 +78,7 @@ function renderDashboard() {
           <span style="height: 8px; width: 8px; background-color: ${statusColor}; box-shadow: 0 0 8px ${statusColor}; border-radius:50%;"></span>
         </div>
         
-        <button id="lang-toggle-icon" style="background: #0c0c0e; border: 1px solid #1a1a1e; border-radius: 4px; padding: 6px 12px; color: #cccccc; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 11px; font-weight: 700;">
+        <button id="lang-toggle-icon" style="background: linear-gradient(135deg, #ff1f1f, #cc0000); border: none; border-radius: 10px; padding: 8px 14px; color: #ffffff; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 11px; font-weight: 800; letter-spacing: 1px; box-shadow: 0 2px 12px rgba(255,30,30,0.4); font-family: 'JetBrains Mono', monospace;">
           ${state.lang.toUpperCase()}
         </button>
       </div>
@@ -104,11 +104,12 @@ function renderStatusTab(me) {
     <div style="width: 100%; display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center;">
 
       <!-- الدائرة الوسطى -->
-      <div style="position: relative; width: 100%; height: 240px; display: flex; align-items: center; justify-content: center; border: 1px dashed #1a1a1e; border-radius: 20px; background: #0c0c0e; margin: 10px 0;">
-        <div style="display: flex; flex-direction: column; align-items: center;">
-          <img src="logo.png" alt="Nacer_x_Rida" style="max-width: 86px; width: 100%; height: auto; object-fit: contain; margin-bottom: 12px; border-radius: 18px; filter: drop-shadow(0 0 10px rgba(255,30,30,0.55)) drop-shadow(0 0 22px rgba(255,0,0,0.25)); -webkit-mask-image: radial-gradient(circle, black 62%, rgba(0,0,0,0.2) 78%, transparent 100%); mask-image: radial-gradient(circle, black 62%, rgba(0,0,0,0.2) 78%, transparent 100%);" onerror="this.onerror=null; this.style.display='none';" />
-          <div style="font-family: 'Anton', sans-serif; font-size: 40px; letter-spacing: 2px; color: #ffffff;">${expiresText}</div>
-          <div style="font-size: 9px; color: #71717a; letter-spacing: 3px; margin-top: 4px;">TIME LEFT</div>
+      <div style="position: relative; width: 100%; height: 260px; display: flex; align-items: center; justify-content: center; border-radius: 28px; background: radial-gradient(circle at 50% 30%, rgba(255,30,30,0.12), rgba(0,0,0,0.6) 70%); border: 1px solid rgba(255,30,30,0.25); margin: 10px 0; overflow: hidden; box-shadow: 0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,30,30,0.08);">
+        <div style="position:absolute; inset:0; background:radial-gradient(circle at 50% 50%, transparent 40%, rgba(0,0,0,0.4) 100%); pointer-events:none;"></div>
+        <div style="display: flex; flex-direction: column; align-items: center; position:relative; z-index:1;">
+          <img src="logo.png" alt="Nacer_x_Rida" style="max-width: 92px; width: 100%; height: auto; object-fit: contain; margin-bottom: 14px; border-radius: 20px; filter: drop-shadow(0 0 14px rgba(255,30,30,0.6)) drop-shadow(0 0 30px rgba(255,0,0,0.3)); -webkit-mask-image: radial-gradient(circle, black 62%, rgba(0,0,0,0.2) 78%, transparent 100%); mask-image: radial-gradient(circle, black 62%, rgba(0,0,0,0.2) 78%, transparent 100%);" onerror="this.onerror=null; this.style.display='none';" />
+          <div style="font-family: 'Anton', sans-serif; font-size: 44px; letter-spacing: 3px; color: #ffffff; text-shadow: 0 0 20px rgba(255,30,30,0.5);">${expiresText}</div>
+          <div style="font-size: 10px; color: #ff6b6b; letter-spacing: 4px; margin-top: 6px; font-weight: 700;">TIME REMAINING</div>
         </div>
       </div>
 
