@@ -405,17 +405,15 @@ const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     const token = (url.searchParams.get('token') || '').trim();
     const tok = token ? verifySubToken(token) : null;
-    let key = tok ? tok.key : (url.searchParams.get('key') || '').trim().toUpperCase();
-    // Fallback: extract key from token payload even if signature fails
-    if (!key && token && token.includes('.')) {
-      try {
-        const [payload] = token.split('.');
-        const obj = JSON.parse(Buffer.from(payload.replace(/-/g,'+').replace(/_/g,'/'),'base64').toString('utf8'));
-        if (obj && obj.k) key = String(obj.k).toUpperCase();
-      } catch(e) {}
+    // Only allow token-based subscription - plain key is blocked to prevent sharing
+    if (!tok) {
+      res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
+      res.end('# subscription unavailable: token required');
+      return;
     }
-    const nodeSel = (url.searchParams.get('node') || '').trim();
-    const hwid = tok ? (tok.hwid || 'sub-device') : (url.searchParams.get('hwid') || url.searchParams.get('device_id') || ('sub-' + Buffer.from(key||'x').toString('hex').slice(0,12))).trim();
+    const key = tok.key;
+    const nodeSel = 'fr1';
+    const hwid = tok.hwid || 'sub-device';
     let keyRecord = key ? db.findKey(key) : null;
     let extOk = false, extExp = null, extReason = '';
     // If key exists locally and is active, trust it (no need for external check)
@@ -553,7 +551,7 @@ const server = http.createServer(async (req, res) => {
     const host = req.headers['x-forwarded-host'] || req.headers.host || 'may-app.onrender.com';
     const nodeSel = 'fr1';
     const subToken = makeSubToken(key, hwid, 7*24*3600);
-    const subUrl = `${proto}://${host}/api/subscription?key=${encodeURIComponent(key)}&node=${encodeURIComponent(nodeSel)}`;
+    const subUrl = `${proto}://${host}/api/subscription?token=${encodeURIComponent(subToken)}`;
     const subUrlEnc = encodeURIComponent(subUrl);
     const displayName = `N_x_R:${keyTail}`;
     return sendJson(res, 200, {
