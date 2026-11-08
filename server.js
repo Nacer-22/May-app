@@ -457,8 +457,10 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     let nodes = (db.get().nodes || []).filter(n => n && n.status !== 'offline');
+    // Only show France (fr1) by default - single connection
+    if (!nodeSel) nodes = nodes.filter(n => n.id === 'fr1');
     if (nodeSel) nodes = nodes.filter(n => n.id === nodeSel || n.name === nodeSel);
-    if (!nodes.length) nodes = (db.get().nodes || []).filter(n => n && n.status !== 'offline');
+    if (!nodes.length) nodes = (db.get().nodes || []).filter(n => n && n.status !== 'offline' && n.id === 'fr1');
     // Use real protocol URIs from node.uri/link/share/raw or SUB_NODES env/config; fallback placeholder
     let lines = [];
     if (process.env.SUB_NODES) {
@@ -549,9 +551,9 @@ const server = http.createServer(async (req, res) => {
 
     const proto = (req.headers['x-forwarded-proto'] || 'https').split(',')[0];
     const host = req.headers['x-forwarded-host'] || req.headers.host || 'may-app.onrender.com';
-    const nodeSel = (body.node || body.server || '').toString();
+    const nodeSel = 'fr1';
     const subToken = makeSubToken(key, hwid, 7*24*3600);
-    const subUrl = `${proto}://${host}/api/subscription?key=${encodeURIComponent(key)}`;
+    const subUrl = `${proto}://${host}/api/subscription?key=${encodeURIComponent(key)}&node=${encodeURIComponent(nodeSel)}`;
     const subUrlEnc = encodeURIComponent(subUrl);
     const displayName = `N_x_R:${keyTail}`;
     return sendJson(res, 200, {
