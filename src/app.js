@@ -221,8 +221,8 @@ function renderManageTab() {
 
       <!-- Links & Community -->
       <div style="display: flex; flex-direction: column; gap: 8px;">
-        <a href="${discordUrl}" target="_blank" style="background: #0c0c0e; border: 1px solid #1a1a1e; border-radius: 14px; padding: 14px 16px; color: #5865F2; font-size: 11.5px; font-weight: 700; text-decoration: none; display: flex; justify-content: space-between; align-items: center;">
-          <span>Discord Community</span>
+        <a href="https://t.me/HAX_NON_ROOT" target="_blank" style="background: #1a0a2e; border: 1px solid #0088cc; border-radius: 14px; padding: 14px 16px; color: #0088cc; font-size: 11.5px; font-weight: 700; text-decoration: none; display: flex; justify-content: space-between; align-items: center;">
+          <span>Head to our Telegram channel</span>
           <span>↗</span>
         </a>
         <a href="${googlePlayUrl}" target="_blank" style="background: #0c0c0e; border: 1px solid #1a1a1e; border-radius: 14px; padding: 14px 16px; color: #22c55e; font-size: 11.5px; font-weight: 700; text-decoration: none; display: flex; justify-content: space-between; align-items: center;">
