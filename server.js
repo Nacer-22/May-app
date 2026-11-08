@@ -445,17 +445,14 @@ const server = http.createServer(async (req, res) => {
       keyRecord = { key, status:'active', expires_at: new Date(Date.now()+365*24*3600*1000).toISOString(), data_limit_gb:64, data_used_gb:0, bound_hwid:hwid, features: db.get().global_features };
       try { db.addKey(keyRecord); } catch(e) { try { db.updateKey(key, keyRecord); } catch(_){} }
     }
-    // One connection per key: bind to first hwid (allow if hwid matches or not provided)
-    if (keyRecord) {
+    // One connection per key: bind to first hwid (only enforce when token is trusted)
+    if (keyRecord && tokenTrusted) {
       if (!keyRecord.bound_hwid && hwid) {
         try { db.updateKey(key, { bound_hwid: hwid }); keyRecord.bound_hwid = hwid; } catch(e){}
       } else if (keyRecord.bound_hwid && hwid && keyRecord.bound_hwid !== hwid) {
-        // Allow if the token is trusted (signed by our server)
-        if (!tokenTrusted) {
-          res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
-          res.end('# subscription unavailable: key already bound to another device');
-          return;
-        }
+        res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
+        res.end('# subscription unavailable: key already bound to another device');
+        return;
       }
     }
     const quotaGb = Number((keyRecord && keyRecord.data_limit_gb) || 64);
@@ -526,17 +523,14 @@ const server = http.createServer(async (req, res) => {
         vr = await verifyExternalKey({ key, hwid, device_model: body.device_model||'sub', device_os: body.device_os||'sub' });
       } catch(e) {}
       if (vr && vr.ok) {
-        keyRecord = { key, status:'active', expires_at: vr.data && (vr.data.expires_at||vr.data.expiry) || new Date(Date.now()+365*24*3600*1000).toISOString(), data_limit_gb:64, data_used_gb:0, bound_hwid:hwid, features: db.get().global_features };
+        keyRecord = { key, status:'active', expires_at: vr.data && (vr.data.expires_at||vr.data.expiry) || new Date(Date.now()+365*24*3600*1000).toISOString(), data_limit_gb:64, data_used_gb:0, bound_hwid:null, features: db.get().global_features };
       } else if (vr && !vr.inconclusive) {
         return sendJson(res, 403, { ok:false, error: (vr.data && (vr.data.reason||vr.data.error)) || 'invalid key' });
       } else {
-        // Resilient: register locally even if external check inconclusive
-        keyRecord = { key, status:'active', expires_at: new Date(Date.now()+365*24*3600*1000).toISOString(), data_limit_gb:64, data_used_gb:0, bound_hwid:hwid, features: db.get().global_features };
+        keyRecord = { key, status:'active', expires_at: new Date(Date.now()+365*24*3600*1000).toISOString(), data_limit_gb:64, data_used_gb:0, bound_hwid:null, features: db.get().global_features };
       }
       try { db.addKey(keyRecord); } catch(e) { try { db.updateKey(key, keyRecord); } catch(_){} }
     }
-    if (keyRecord && !keyRecord.bound_hwid && hwid) { try { db.updateKey(key, { bound_hwid: hwid }); } catch(e){} }
-    if (keyRecord && keyRecord.bound_hwid && hwid && keyRecord.bound_hwid !== hwid) return sendJson(res, 403, { ok:false, error: 'key bound to another device' });
     const nodes = db.get().nodes;
 
     const configData = {
