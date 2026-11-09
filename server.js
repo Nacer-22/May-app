@@ -350,7 +350,7 @@ const server = http.createServer(async (req, res) => {
           device_model: clientDeviceModel,
           device_os: clientDeviceOs,
           created_at: new Date().toISOString(),
-          expires_at: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString(),
+          expires_at: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
           note: 'Local fallback (external server unavailable)',
           features: db.get().global_features
         };
@@ -555,11 +555,11 @@ const server = http.createServer(async (req, res) => {
         vr = await verifyExternalKey({ key, hwid, device_model: body.device_model||'sub', device_os: body.device_os||'sub' });
       } catch(e) {}
       if (vr && vr.ok) {
-        keyRecord = { key, status:'active', expires_at: vr.data && (vr.data.expires_at||vr.data.expiry) || new Date(Date.now()+365*24*3600*1000).toISOString(), data_limit_gb:64, data_used_gb:0, bound_hwid:null, features: db.get().global_features };
+        keyRecord = { key, status:'active', expires_at: vr.data && (vr.data.expires_at||vr.data.expiry) || new Date(Date.now()+24*3600*1000).toISOString(), data_limit_gb:64, data_used_gb:0, bound_hwid:null, features: db.get().global_features };
       } else if (vr && !vr.inconclusive) {
         return sendJson(res, 403, { ok:false, error: (vr.data && (vr.data.reason||vr.data.error)) || 'invalid key' });
       } else {
-        keyRecord = { key, status:'active', expires_at: new Date(Date.now()+365*24*3600*1000).toISOString(), data_limit_gb:64, data_used_gb:0, bound_hwid:null, features: db.get().global_features };
+        keyRecord = { key, status:'active', expires_at: new Date(Date.now()+24*3600*1000).toISOString(), data_limit_gb:64, data_used_gb:0, bound_hwid:null, features: db.get().global_features };
       }
       try { db.addKey(keyRecord); } catch(e) { try { db.updateKey(key, keyRecord); } catch(_){} }
     }
@@ -579,9 +579,15 @@ const server = http.createServer(async (req, res) => {
       routing: {
         domainStrategy: "AsIs",
         rules: [
-          { type: "field", domain: ["domain:freefiremobile.com","domain:garena.com","domain:ff.garena.com"], outboundTag: "proxy" },
-          { type: "field", network: "udp,tcp", outboundTag: "direct" }
-        ]
+          { type: "field", domain: ["domain:freefiremobile.com","domain:garena.com","domain:ff.garena.com","domain:garena.co.th","domain:freefiremobile.garena.com"], outboundTag: "proxy" },
+          { type: "field", outboundTag: "direct" }
+        ],
+        settings: {
+          "proxySettings": [
+            { "tag": "proxy", "address": "127.0.0.1", "port": 15000, "type": "socks" }
+          ],
+          "directSettings": { "tag": "direct", "type": "direct" }
+        }
       }
     };
 
