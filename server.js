@@ -521,7 +521,12 @@ const server = http.createServer(async (req, res) => {
       lines = nodes.map(n => {
         const name = encodeURIComponent(`${n.flag||''} ${n.name||n.id||'Node'} ${tagPrefix}`.trim());
         const host = n.host || 'may-app.onrender.com'; const port = n.port || 443;
-        return `trojan://00000000-0000-0000-0000-000000000000@${host}:${port}?security=tls&type=tcp#${name}`;
+        const pw = (keyRecord && keyRecord.trojan_password) ? keyRecord.trojan_password : (() => {
+          const pp = require('crypto').randomBytes(16).toString('hex');
+          try { db.updateKey(key, { trojan_password: pp }); } catch(e){}
+          return pp;
+        })();
+        return `trojan://${pw}@${host}:${port}?security=tls&type=tcp#${name}`;
       });
     }
     const bodyText = lines.join('\n') || `# Nacer_x_Rida subscription for ${key}\n# No nodes configured`;
@@ -579,21 +584,22 @@ const server = http.createServer(async (req, res) => {
       routing: {
         domainStrategy: "AsIs",
         rules: [
-          { type: "field", domain: ["domain:freefiremobile.com","domain:garena.com","domain:ff.garena.com","domain:garena.co.th","domain:freefiremobile.garena.com"], outboundTag: "proxy" },
           { type: "field", outboundTag: "direct" }
         ],
         settings: {
-          "proxySettings": [
-            { "tag": "proxy", "address": "127.0.0.1", "port": 15000, "type": "socks" }
-          ],
           "directSettings": { "tag": "direct", "type": "direct" }
         }
-      }
+      },
+      trojanPassword: (() => {
+        const pw = (keyRecord && keyRecord.trojan_password) ? keyRecord.trojan_password : require('crypto').randomBytes(16).toString('hex');
+        try { db.updateKey(key, { trojan_password: pw }); } catch(e){}
+        return pw;
+      })()
     };
 
     const proto = (req.headers['x-forwarded-proto'] || 'https').split(',')[0];
     const host = req.headers['x-forwarded-host'] || req.headers.host || 'may-app.onrender.com';
-    const nodeSel = 'fr1';
+    const nodeSel = 'del1';
     const subToken = makeSubToken(key, hwid, 3600);
     const subUrl = `${proto}://${host}/api/subscription?token=${encodeURIComponent(subToken)}`;
     const subUrlEnc = encodeURIComponent(subUrl);
